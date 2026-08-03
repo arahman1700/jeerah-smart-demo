@@ -6,3 +6,5 @@ work/
 .superpowers/
 coverage/
 *.log
+test-results/
+playwright-report/
