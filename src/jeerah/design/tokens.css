@@ -1,0 +1,32 @@
+:root {
+  --js-deep-nexus: #191c2e;
+  --js-steel-slate: #4c558c;
+  --js-glow-white: #edffff;
+  --js-brand-gradient-dark: linear-gradient(135deg, #22274f 0%, #191c2e 100%);
+  --js-brand-gradient-light: linear-gradient(135deg, #4c558c 0%, #edffff 100%);
+  --js-success: #08705b;
+  --js-warning: #a85a00;
+  --js-danger: #b42336;
+  --js-cloud: #f5f7fc;
+  --js-surface: #ffffff;
+  --js-text: #191c2e;
+  --js-muted: #5f667d;
+  --js-border: #d8ddec;
+  --js-radius-sm: 12px;
+  --js-radius-md: 18px;
+  --js-radius-lg: 28px;
+  --js-shadow-soft: 0 18px 48px rgba(3, 21, 52, 0.14);
+  --js-motion-fast: 160ms;
+  --js-motion-normal: 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

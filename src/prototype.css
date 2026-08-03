@@ -1,5 +1,73 @@
 /* Add app-specific styles here. Keep the template-owned runtime styles in styles.css unchanged. */
+@import "./jeerah/design/tokens.css";
+@import "./jeerah/design/fonts.css";
 
 .jeerah-root {
   min-height: 100%;
+  color: var(--js-text);
+  background: var(--js-surface);
+}
+
+.jeerah-shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  padding: 12px 18px;
+  color: var(--js-glow-white);
+  background: var(--js-brand-gradient-dark);
+}
+
+.jeerah-shell-header img {
+  display: block;
+  width: auto;
+  height: 28px;
+  max-width: 150px;
+}
+
+.jeerah-shell-header button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--js-glow-white) 54%, transparent);
+  border-radius: var(--js-radius-sm);
+  color: inherit;
+  background: transparent;
+}
+
+.jeerah-shell-intro {
+  padding: 20px;
+}
+
+body[data-jeerah-surface] .phone-stage {
+  display: none;
+}
+
+body[data-jeerah-surface="resident"] {
+  overflow: hidden;
+}
+
+body[data-jeerah-surface="admin"] {
+  overflow: auto;
+}
+
+#jeerah-resident-surface,
+#jeerah-admin-surface {
+  color: var(--js-text);
+  background: var(--js-surface);
+}
+
+#jeerah-resident-surface {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  min-width: 320px;
+  min-height: 100dvh;
+  overflow: auto;
+  --mobile-safe-area-height: env(safe-area-inset-bottom, 0px);
+}
+
+#jeerah-admin-surface {
+  min-width: 320px;
+  min-height: 100dvh;
 }
