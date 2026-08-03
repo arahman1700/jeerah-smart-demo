@@ -74,6 +74,7 @@ describe("Jeerah demo domain", () => {
       const resident = residents.get(order.residentId);
       expect(resident).toBeDefined();
       expect(units.get(order.unitId!)?.buildingId).toBe(order.buildingId);
+      if (order.unitId) expect(order.unitId).toBe(resident!.unitId);
       expect(units.get(resident!.unitId)?.buildingId).toBe(order.buildingId);
       expect(services.has(order.serviceId)).toBe(true);
       expect(providers.get(order.providerId!)?.serviceIds).toContain(order.serviceId);
@@ -107,6 +108,25 @@ describe("Jeerah demo domain", () => {
     for (const activity of state.activities) expect(buildingIds.has(activity.buildingId)).toBe(true);
   });
 
+  it("uses quote-capable services and unpaid quote contracts for quote states", () => {
+    const quoteCapableServiceIds = new Set(state.serviceOfferings.filter((service) => service.fulfillment.includes("quote")).map((service) => service.id));
+    const awaitingQuote = state.orders.find((order) => order.status === "awaiting-quote")!;
+    const quoteReady = state.orders.find((order) => order.status === "quote-ready")!;
+    expect(quoteCapableServiceIds.has(awaitingQuote.serviceId)).toBe(true);
+    expect(awaitingQuote.amount).toBeUndefined();
+    expect(awaitingQuote.quoteAmount).toBeUndefined();
+    expect(awaitingQuote.paymentStatus).not.toBe("paid");
+    expect(quoteCapableServiceIds.has(quoteReady.serviceId)).toBe(true);
+    expect(quoteReady.quoteAmount).toBeTypeOf("number");
+    expect(quoteReady.amount).toBeUndefined();
+    expect(quoteReady.paymentStatus).not.toBe("paid");
+    expect(Object.fromEntries([...new Set(state.orders.map((order) => order.status))].map((status) => [status, state.orders.filter((order) => order.status === status).length]))).toEqual({
+      completed: 3, cancelled: 1, scheduled: 2, confirmed: 2, assigned: 2, "en-route": 2, "in-progress": 2,
+      "awaiting-resident-approval": 1, "awaiting-quote": 1, "quote-ready": 1, refunded: 1,
+    });
+    for (const pass of state.visitorPasses) expect(pass.guestName).not.toMatch(/^Guest \d+$/);
+  });
+
   it("uses mutually exclusive pricing fields for every pricing model", () => {
     for (const service of state.serviceOfferings) {
       if (service.pricingModel === "fixed") {
@@ -136,12 +156,32 @@ describe("Jeerah demo domain", () => {
     expect(searchServiceCatalog(state, "car", { scope: "apartment" }).map((service) => service.key)).toContain("mobile-car-wash");
   });
 
-  it("combines every supported service filter", () => {
-    const service = state.serviceOfferings.find((item) => item.fulfillment.includes("recurring"))!;
-    expect(searchServiceCatalog(state, "", { familyId: service.familyId })).toContainEqual(service);
-    expect(searchServiceCatalog(state, "", { fulfillment: "recurring" })).toContainEqual(service);
-    expect(searchServiceCatalog(state, "", { active: true })).toContainEqual(service);
-    expect(searchServiceCatalog(state, "", { providerId: service.providerIds[0] })).toContainEqual(service);
+  it("applies every supported service filter and their conjunction", () => {
+    const ids = (items: typeof state.serviceOfferings) => items.map((service) => service.id).sort();
+    const family = "home-maintenance" as const;
+    const familyResults = searchServiceCatalog(state, "", { familyId: family });
+    expect(familyResults).not.toHaveLength(0);
+    expect(familyResults.every((service) => service.familyId === family)).toBe(true);
+    expect(ids(familyResults)).not.toContain("service-pest-control");
+
+    const fulfillmentResults = searchServiceCatalog(state, "", { fulfillment: "recurring" });
+    expect(fulfillmentResults.every((service) => service.fulfillment.includes("recurring"))).toBe(true);
+    expect(ids(fulfillmentResults)).toEqual(ids(state.serviceOfferings.filter((service) => service.fulfillment.includes("recurring"))));
+
+    const scopeResults = searchServiceCatalog(state, "", { scope: "building" });
+    expect(scopeResults.every((service) => service.scope === "building" || service.scope === "both")).toBe(true);
+    expect(ids(scopeResults)).toEqual(ids(state.serviceOfferings.filter((service) => service.scope === "building" || service.scope === "both")));
+
+    const providerId = "provider-1";
+    const providerResults = searchServiceCatalog(state, "", { providerId });
+    expect(providerResults.every((service) => service.providerIds.includes(providerId))).toBe(true);
+    expect(ids(providerResults)).toEqual(ids(state.serviceOfferings.filter((service) => service.providerIds.includes(providerId))));
+
+    const disabled = reduceDemoState(state, { type: "service/availability-changed", serviceId: "service-pest-control", active: false });
+    expect(ids(searchServiceCatalog(disabled, "", { active: false }))).toEqual(["service-pest-control"]);
+    expect(ids(searchServiceCatalog(disabled, "", { active: true }))).not.toContain("service-pest-control");
+
+    expect(ids(searchServiceCatalog(state, "", { familyId: "care-cleaning", fulfillment: "recurring", scope: "apartment", providerId: "provider-16", active: true }))).toEqual(["service-home-cleaning"]);
   });
 
   it("formats values deterministically", () => {

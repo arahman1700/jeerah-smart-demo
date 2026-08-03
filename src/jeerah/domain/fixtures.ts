@@ -81,12 +81,32 @@ const residentLocation = (residentId: string) => {
   const unit = unitById.get(resident.unitId)!;
   return { residentId, unitId: unit.id, buildingId: unit.buildingId };
 };
-const orderRows: Array<[OrderStatus, string]> = [
-  ["completed", "resident-saif"], ["cancelled", "resident-lina"], ["scheduled", "resident-omar"], ["confirmed", "resident-saif"], ["assigned", "resident-noura"], ["en-route", "resident-yara"], ["in-progress", "resident-noura"], ["awaiting-resident-approval", "resident-hassan"], ["awaiting-quote", "resident-maha"], ["quote-ready", "resident-hassan"], ["refunded", "resident-adel"], ["completed", "resident-adel"], ["scheduled", "resident-saif"], ["confirmed", "resident-lina"], ["assigned", "resident-omar"], ["en-route", "resident-noura"], ["in-progress", "resident-hassan"], ["completed", "resident-adel"],
+type OrderRow = { id: string; status: OrderStatus; serviceId: string; residentId: string; paymentStatus: ServiceOrder["paymentStatus"]; amount?: number; quoteAmount?: number };
+const orderRows: OrderRow[] = [
+  { id: "order-1", status: "completed", serviceId: "service-pest-control", residentId: "resident-saif", paymentStatus: "paid", amount: 100 },
+  { id: "order-2", status: "cancelled", serviceId: "service-general-maintenance", residentId: "resident-lina", paymentStatus: "cancelled" },
+  { id: "order-3", status: "scheduled", serviceId: "service-hourly-handyman", residentId: "resident-omar", paymentStatus: "paid", amount: 150 },
+  { id: "order-4", status: "confirmed", serviceId: "service-gas-delivery", residentId: "resident-saif", paymentStatus: "paid", amount: 120 },
+  { id: "order-5", status: "assigned", serviceId: "service-water-delivery", residentId: "resident-noura", paymentStatus: "paid", amount: 80 },
+  { id: "order-6", status: "en-route", serviceId: "service-cleaning-supplies", residentId: "resident-yara", paymentStatus: "paid", amount: 95 },
+  { id: "order-7", status: "in-progress", serviceId: "service-elevator-maintenance", residentId: "resident-noura", paymentStatus: "paid", amount: 700 },
+  { id: "order-8", status: "awaiting-resident-approval", serviceId: "service-tank-fill", residentId: "resident-hassan", paymentStatus: "pending", amount: 220 },
+  { id: "order-9", status: "awaiting-quote", serviceId: "service-sewage-service", residentId: "resident-maha", paymentStatus: "pending" },
+  { id: "order-10", status: "quote-ready", serviceId: "service-mobile-car-maintenance", residentId: "resident-hassan", paymentStatus: "pending", quoteAmount: 420 },
+  { id: "order-11", status: "refunded", serviceId: "service-mobile-tire-change", residentId: "resident-adel", paymentStatus: "refunded", amount: 180 },
+  { id: "order-12", status: "completed", serviceId: "service-grocery-delivery", residentId: "resident-adel", paymentStatus: "paid", amount: 130 },
+  { id: "order-13", status: "scheduled", serviceId: "service-produce-delivery", residentId: "resident-saif", paymentStatus: "paid", amount: 110 },
+  { id: "order-14", status: "confirmed", serviceId: "service-bedding-laundry", residentId: "resident-lina", paymentStatus: "paid", amount: 200 },
+  { id: "order-15", status: "assigned", serviceId: "service-home-cleaning", residentId: "resident-omar", paymentStatus: "paid", amount: 250 },
+  { id: "order-16", status: "en-route", serviceId: "service-camera-installation", residentId: "resident-noura", paymentStatus: "paid", amount: 600 },
+  { id: "order-17", status: "in-progress", serviceId: "service-neighbor-gifts", residentId: "resident-hassan", paymentStatus: "paid", amount: 75 },
+  { id: "order-18", status: "completed", serviceId: "service-building-washing", residentId: "resident-adel", paymentStatus: "paid", amount: 900 },
 ];
-const orders: ServiceOrder[] = orderRows.map(([status, residentId], index) => {
-  const location = residentLocation(residentId);
-  return { id: `order-${index + 1}`, serviceId: serviceOfferings[index].id, providerId: serviceOfferings[index].providerIds[0], ...location, fulfillment: serviceOfferings[index].fulfillment[0], status, paymentStatus: status === "refunded" ? "refunded" : status === "awaiting-quote" ? "pending" : status === "cancelled" ? "cancelled" : "paid", amount: 100 + index * 25, scheduledAt: DATE, etaMinutes: 30, timeline: [{ id: `timeline-${index + 1}`, status, occurredAt: DATE, note: text("تحديث تجريبي", "Demo update") }], createdAt: DATE };
+const serviceById = new Map(serviceOfferings.map((service) => [service.id, service]));
+const orders: ServiceOrder[] = orderRows.map((row) => {
+  const location = residentLocation(row.residentId);
+  const service = serviceById.get(row.serviceId)!;
+  return { id: row.id, serviceId: row.serviceId, providerId: service.providerIds[0], ...location, fulfillment: service.fulfillment[0], status: row.status, paymentStatus: row.paymentStatus, ...(row.amount === undefined ? {} : { amount: row.amount }), ...(row.quoteAmount === undefined ? {} : { quoteAmount: row.quoteAmount }), scheduledAt: DATE, etaMinutes: 30, timeline: [{ id: `timeline-${row.id}`, status: row.status, occurredAt: DATE, note: text("تحديث تجريبي", "Demo update") }], createdAt: DATE };
 });
 
 const paymentRows: Array<[string, string, Payment["status"]]> = [
@@ -111,7 +131,7 @@ const events: CommunityEvent[] = [
   { id: "event-1", buildingId: "building-89", title: text("لقاء الجيران", "Neighbor meetup"), startsAt: "2026-08-12T19:00:00+03:00", attendeeIds: ["resident-saif", "resident-lina", "resident-omar"], capacity: 30 },
   { id: "event-2", buildingId: "jeddah-view", title: text("لقاء الجيران", "Neighbor meetup"), startsAt: "2026-08-12T19:00:00+03:00", attendeeIds: ["resident-hassan", "resident-maha"], capacity: 30 },
 ];
-const visitorPasses: VisitorPass[] = ["resident-saif", "resident-lina", "resident-noura", "resident-hassan", "resident-adel"].map((residentId, index) => ({ id: `pass-${index + 1}`, ...residentLocation(residentId), guestName: `Guest ${index + 1}`, expiresAt: "2026-08-04T12:00:00+03:00", status: (["active", "expired", "revoked", "active", "active"] as const)[index] }));
+const visitorPasses: VisitorPass[] = [["resident-saif", "Mariam Al Noor"], ["resident-lina", "Khaled Rahim"], ["resident-noura", "Noor Al Ameen"], ["resident-hassan", "Rana Fares"], ["resident-adel", "Yusuf Hadi"]].map(([residentId, guestName], index) => ({ id: `pass-${index + 1}`, ...residentLocation(residentId), guestName, expiresAt: "2026-08-04T12:00:00+03:00", status: (["active", "expired", "revoked", "active", "active"] as const)[index] }));
 const amenityBookings: AmenityBooking[] = ["resident-saif", "resident-lina", "resident-noura", "resident-yara", "resident-hassan", "resident-adel"].map((residentId, index) => {
   const { buildingId } = residentLocation(residentId);
   return { id: `booking-${index + 1}`, buildingId, residentId, amenityId: index % 2 ? "gym" : "lounge", startsAt: "2026-08-05T18:00:00+03:00", status: (["upcoming", "completed", "cancelled", "upcoming", "completed", "upcoming"] as const)[index] };
