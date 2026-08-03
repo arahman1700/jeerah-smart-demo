@@ -14,11 +14,13 @@ import type { DemoState } from "../../src/jeerah/domain/models";
 import {
   amenityBookingStatusMessageKey,
   announcementPriorityMessageKey,
+  communityPulseStatusMessageKey,
   demoScenarioMessageKey,
   eventStatusMessageKey,
   invoiceStatusMessageKey,
   invitationStatusMessageKey,
   neighborGiftStatusMessageKey,
+  neighborRelationshipMessageKey,
   orderStatusMessageKey,
   paymentMethodMessageKey,
   paymentStatusMessageKey,
@@ -27,6 +29,8 @@ import {
   providerStatusMessageKey,
   quoteStatusMessageKey,
   residentStatusMessageKey,
+  recurringPlanCadenceMessageKey,
+  requiredPlanMessageKeys,
   serviceFulfillmentMessageKey,
   serviceFamilyMessageKey,
   servicePricingMessageKey,
@@ -34,6 +38,7 @@ import {
   translate,
   unitStatusMessageKey,
   visitorPassStatusMessageKey,
+  messages,
 } from "../../src/jeerah/i18n/messages";
 
 const repositories = new Set<DemoRepository>();
@@ -164,6 +169,9 @@ describe("Jeerah shell", () => {
       servicePricingMessageKey,
       serviceFamilyMessageKey,
       demoScenarioMessageKey,
+      communityPulseStatusMessageKey,
+      recurringPlanCadenceMessageKey,
+      neighborRelationshipMessageKey,
     ];
 
     for (const map of maps) {
@@ -171,6 +179,15 @@ describe("Jeerah shell", () => {
         expect(translate("ar", key)).not.toMatch(/^[A-Z_]{3,}\.[A-Z_]{3,}/);
         expect(translate("en", key)).not.toMatch(/^[A-Z_]{3,}\.[A-Z_]{3,}/);
       }
+    }
+  });
+
+  it("ships every explicit Tasks 6–12 copy requirement in both dictionaries", () => {
+    for (const key of requiredPlanMessageKeys) {
+      expect(messages.en[key], `English ${key}`).toEqual(expect.any(String));
+      expect(messages.ar[key], `Arabic ${key}`).toEqual(expect.any(String));
+      expect(messages.en[key].trim(), `English ${key}`).not.toHaveLength(0);
+      expect(messages.ar[key].trim(), `Arabic ${key}`).not.toHaveLength(0);
     }
   });
 
