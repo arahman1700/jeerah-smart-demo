@@ -4,6 +4,7 @@ import brand from "../../src/jeerah/assets/brand-manifest.json";
 import content from "../../src/jeerah/assets/asset-manifest.json";
 import { assetUrl } from "../../src/jeerah/assets/url";
 import { JeerahLogo } from "../../src/jeerah/design/JeerahLogo";
+import { createSeedState } from "../../src/jeerah/domain/fixtures";
 
 const expectedContentIds = [
   "building-89-night",
@@ -69,6 +70,38 @@ describe("Jeerah asset contracts", () => {
       expect(entry.alt.en.length).toBeGreaterThan(12);
       expect(entry.provenance).toMatch(/ImageGen/i);
     }
+  });
+
+  it("resolves every fixture photograph ID to exactly one Task 5 asset", () => {
+    const state = createSeedState();
+    const entriesById = new Map(content.map((entry) => [entry.id, entry]));
+    const imageIds = [
+      ...state.buildings.flatMap((building) => building.imageIds),
+      ...state.units.flatMap((unit) => unit.imageIds),
+      ...state.providers.flatMap((provider) => provider.imageId ? [provider.imageId] : []),
+    ];
+
+    for (const imageId of imageIds) {
+      expect(content.filter((entry) => entry.id === imageId), imageId).toHaveLength(1);
+    }
+    expect(state.buildings.find((building) => building.id === "building-89")?.imageIds).toEqual([
+      "building-89-night",
+      "building-89-day",
+      "lobby",
+      "gym",
+      "meeting-room",
+      "parking",
+    ]);
+    expect(state.units.find((unit) => unit.id === "unit-89-1204")?.imageIds).toEqual([
+      "living-room",
+      "kitchen",
+      "bedroom",
+      "balcony",
+    ]);
+    expect(state.providers.every((provider) => {
+      const entry = provider.imageId ? entriesById.get(provider.imageId) : undefined;
+      return entry?.category === "service";
+    })).toBe(true);
   });
 
   it("resolves public assets under root and Pages deployment bases", () => {

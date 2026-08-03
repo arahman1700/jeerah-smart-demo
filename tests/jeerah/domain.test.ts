@@ -38,6 +38,81 @@ describe("Jeerah demo domain", () => {
     );
   });
 
+  it("anchors the current resident, Unit 1204, Building 89, and elevator invoice", () => {
+    const resident = state.residents.find((item) => item.id === "resident-saif");
+    const unit = state.units.find((item) => item.id === resident?.unitId);
+    const building = state.buildings.find((item) => item.id === unit?.buildingId);
+    const invoice = state.invoices.find((item) => item.id === "invoice-elevator");
+
+    expect(state.schemaVersion).toBe(2);
+    expect(state.currentResidentId).toBe("resident-saif");
+    expect(state.currentBuildingId).toBe("building-89");
+    expect(resident).toMatchObject({
+      unitId: "unit-89-1204",
+      name: { ar: "سيف الدين", en: "Saifeldeen" },
+    });
+    expect(unit).toMatchObject({
+      id: "unit-89-1204",
+      buildingId: "building-89",
+      label: { ar: "الوحدة ١٢٠٤", en: "Unit 1204" },
+      floor: 12,
+      status: "occupied",
+      residentIds: ["resident-saif"],
+    });
+    expect(building?.id).toBe("building-89");
+    expect(invoice).toMatchObject({
+      buildingId: "building-89",
+      unitId: "unit-89-1204",
+      residentId: "resident-saif",
+      subtotal: 700,
+      tax: 0,
+      total: 700,
+      status: "due",
+      dueDate: "2026-08-08T12:00:00+03:00",
+    });
+  });
+
+  it("ships meaningful localized Building 89 activity in reverse chronological order", () => {
+    const buildingActivity = state.activities.filter((activity) => activity.buildingId === "building-89");
+
+    expect(buildingActivity).toEqual([
+      {
+        id: "activity-1",
+        buildingId: "building-89",
+        kind: "landscaping",
+        title: { ar: "اكتملت أعمال تنسيق الحدائق", en: "Landscaping completed" },
+        description: { ar: "أمر العمل #L-2458", en: "Work order #L-2458" },
+        occurredAt: "2026-08-03T10:24:00+03:00",
+      },
+      {
+        id: "activity-5",
+        buildingId: "building-89",
+        kind: "notice",
+        title: { ar: "تنبيه مجتمعي", en: "Community notice" },
+        description: { ar: "صيانة المياه في ٦ أغسطس", en: "Water maintenance on Aug 6" },
+        occurredAt: "2026-08-02T18:30:00+03:00",
+      },
+      {
+        id: "activity-9",
+        buildingId: "building-89",
+        kind: "inspection",
+        title: { ar: "تمت جدولة فحص المصعد", en: "Elevator inspection scheduled" },
+        description: { ar: "الفحص هذا المساء", en: "Inspection this evening" },
+        occurredAt: "2026-08-01T16:00:00+03:00",
+      },
+    ]);
+  });
+
+  it("derives every Saif order and visitor pass location from Unit 1204", () => {
+    const orders = state.orders.filter((order) => order.residentId === "resident-saif");
+    const passes = state.visitorPasses.filter((pass) => pass.residentId === "resident-saif");
+
+    expect(orders.length).toBeGreaterThan(0);
+    expect(passes.length).toBeGreaterThan(0);
+    expect(orders.every((order) => order.unitId === "unit-89-1204" && order.buildingId === "building-89")).toBe(true);
+    expect(passes.every((pass) => pass.unitId === "unit-89-1204" && pass.buildingId === "building-89")).toBe(true);
+  });
+
   it("includes every requested service key exactly once with one primary family", () => {
     expect(state.serviceOfferings.map((service) => service.key).sort()).toEqual([...REQUIRED_SERVICE_KEYS].sort());
     expect(new Set(state.serviceOfferings.map((service) => service.familyId)).size).toBe(8);
@@ -192,8 +267,15 @@ describe("Jeerah demo domain", () => {
 
   it("calculates pulse from collection, maintenance, and alerts", () => {
     const pulse = calculateCommunityPulse(state, "building-89");
-    expect(pulse.score).toBeGreaterThanOrEqual(70);
-    expect(pulse.factors.map((factor) => factor.key)).toEqual(["collection", "maintenance", "alerts"]);
+    expect(pulse).toEqual({
+      score: 71,
+      status: "attention",
+      factors: [
+        { key: "collection", score: 75 },
+        { key: "maintenance", score: 60 },
+        { key: "alerts", score: 80 },
+      ],
+    });
   });
 
   it("marks an invoice paid without mutating the original state", () => {
@@ -266,7 +348,7 @@ describe("Jeerah demo domain", () => {
     { name: "joins neighbor deals", action: { type: "neighbor-deal/joined", dealId: "deal-1", residentId: "resident-lina" }, verify: (next: typeof state) => expect(next.neighborDeals[0].participantIds).toContain("resident-lina") },
     { name: "sends neighbor gifts", action: { type: "neighbor-gift/sent", gift: { ...state.gifts[0], id: "gift-created" } }, verify: (next: typeof state) => expect(next.gifts).toHaveLength(3) },
     { name: "updates buildings", action: { type: "building/updated", buildingId: "building-89", patch: { manager: { ar: "مدير", en: "Manager" } } }, verify: (next: typeof state) => expect(next.buildings[0].manager.en).toBe("Manager") },
-    { name: "updates units", action: { type: "unit/updated", unitId: "unit-89-101", patch: { status: "maintenance" } }, verify: (next: typeof state) => expect(next.units[0].status).toBe("maintenance") },
+    { name: "updates units", action: { type: "unit/updated", unitId: "unit-89-1204", patch: { status: "maintenance" } }, verify: (next: typeof state) => expect(next.units[0].status).toBe("maintenance") },
     { name: "updates residents", action: { type: "resident/updated", residentId: "resident-saif", patch: { role: "tenant" } }, verify: (next: typeof state) => expect(next.residents[0].role).toBe("tenant") },
     { name: "publishes announcements", action: { type: "announcement/published", announcement: { ...state.announcements[0], id: "announcement-created" } }, verify: (next: typeof state) => expect(next.announcements).toHaveLength(7) },
     { name: "creates polls", action: { type: "poll/created", poll: { ...state.polls[0], id: "poll-created" } }, verify: (next: typeof state) => expect(next.polls).toHaveLength(3) },
@@ -274,7 +356,11 @@ describe("Jeerah demo domain", () => {
     { name: "creates amenity bookings", action: { type: "amenity-booking/created", booking: { ...state.amenityBookings[0], id: "booking-created" } }, verify: (next: typeof state) => expect(next.amenityBookings).toHaveLength(7) },
     { name: "moves poll votes", action: { type: "poll/voted", pollId: "poll-1", optionId: "poll-1-evening", residentId: "resident-saif" }, verify: (next: typeof state) => expect(next.polls[0].options[1].voterIds).toContain("resident-saif") },
     { name: "records event RSVPs", action: { type: "event/rsvp", eventId: "event-1", residentId: "resident-saif", attending: false }, verify: (next: typeof state) => expect(next.events[0].attendeeIds).not.toContain("resident-saif") },
-    { name: "resets demo state", action: { type: "demo/reset" }, verify: (next: typeof state) => expect(next).not.toBe(state) },
+    { name: "resets demo state", action: { type: "demo/reset" }, verify: (next: typeof state) => {
+      expect(next).not.toBe(state);
+      expect(next.schemaVersion).toBe(2);
+      expect(next.residents.find((resident) => resident.id === "resident-saif")?.unitId).toBe("unit-89-1204");
+    } },
   ] as Array<{ name: string; action: DemoAction; verify: (next: typeof state) => void }>)("$name", ({ action, verify }) => {
     verify(reduceDemoState(state, action));
   });

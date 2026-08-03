@@ -59,9 +59,9 @@ const source = () => globalThis.crypto?.randomUUID?.() ?? `demo-${Math.random().
 
 function createRepository(options: InternalOptions = {}): DemoRepository {
   const now = options.now ?? (() => new Date());
-  const dbName = options.dbName ?? "jeerah-demo";
+  const dbName = options.dbName ?? "jeerah-demo-v2";
   const sourceId = options.sourceId ?? source();
-  const channel: StateChannel = (options.channelFactory ?? createStateChannel)(options.channelName ?? "jeerah-demo", sourceId);
+  const channel: StateChannel = (options.channelFactory ?? createStateChannel)(options.channelName ?? "jeerah-demo-v2", sourceId);
   const initialState = clone(options.initialState ?? createSeedState());
   const listeners = new Set<(snapshot: RepositorySnapshot) => void>();
   let state = clone(initialState);

@@ -12,6 +12,13 @@ describe("applyScenario", () => {
     expect(next.locale).toBe("en");
     expect(next.scenario).toBe("normal");
     expect(next.invoices).toHaveLength(10);
+    expect(next.schemaVersion).toBe(2);
+    expect(next.residents.find((resident) => resident.id === "resident-saif")).toMatchObject({
+      unitId: "unit-89-1204",
+      name: { ar: "سيف الدين", en: "Saifeldeen" },
+    });
+    expect(next.invoices.find((invoice) => invoice.id === "invoice-elevator")?.dueDate)
+      .toBe("2026-08-08T12:00:00+03:00");
   });
 
   it("empties only the scenario-controlled collections", () => {

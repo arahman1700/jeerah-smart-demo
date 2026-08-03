@@ -42,11 +42,58 @@ afterEach(async () => {
   repositories.forEach((repository) => repository.close());
   repositories.clear();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   await Promise.all([...databaseNames].map(deleteDatabase));
   databaseNames.clear();
 });
 
 describe("DemoRepository", () => {
+  it("uses fresh v2 default database and channel namespaces", async () => {
+    databaseNames.add("jeerah-demo-v2");
+    const channelNames: string[] = [];
+    const channelFactory: StateChannelFactory = (name) => {
+      channelNames.push(name);
+      return {
+        syncMode: "memory",
+        publish: () => undefined,
+        subscribe: () => () => undefined,
+        close: () => undefined,
+      };
+    };
+    const open = vi.spyOn(indexedDB, "open");
+    const remove = vi.spyOn(indexedDB, "deleteDatabase");
+    const repository = createTestRepository({ channelFactory });
+
+    const snapshot = await repository.load();
+
+    expect(snapshot.state.schemaVersion).toBe(2);
+    expect(channelNames).toEqual(["jeerah-demo-v2"]);
+    expect(open).toHaveBeenCalledWith("jeerah-demo-v2", 1);
+    expect(open.mock.calls.map(([name]) => name)).toEqual(["jeerah-demo-v2"]);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("retains explicit database and channel namespaces", async () => {
+    const dbName = nextDatabaseName();
+    const channelNames: string[] = [];
+    const channelFactory: StateChannelFactory = (name) => {
+      channelNames.push(name);
+      return {
+        syncMode: "memory",
+        publish: () => undefined,
+        subscribe: () => () => undefined,
+        close: () => undefined,
+      };
+    };
+    const open = vi.spyOn(indexedDB, "open");
+    const repository = createTestRepository({ dbName, channelName: "explicit-channel", channelFactory });
+
+    await repository.load();
+
+    expect(channelNames).toEqual(["explicit-channel"]);
+    expect(open).toHaveBeenCalledWith(dbName, 1);
+  });
+
   it("persists an action and reloads the committed state", async () => {
     const repository = createTestRepository({
       dbName: nextDatabaseName(),
@@ -89,6 +136,8 @@ describe("DemoRepository", () => {
     expect(reset.meta.revision).toBe(changed.meta.revision + 1);
     expect(reset.meta.revision).toBeGreaterThan(first.meta.revision);
     expect(reset.state.locale).toBe("ar");
+    expect(reset.state.schemaVersion).toBe(2);
+    expect(reset.state.residents.find((resident) => resident.id === "resident-saif")?.unitId).toBe("unit-89-1204");
   });
 
   it("notifies another repository instance with the committed snapshot", async () => {

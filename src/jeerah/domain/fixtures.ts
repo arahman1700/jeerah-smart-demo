@@ -12,6 +12,12 @@ export const CURRENT_BUILDING_ID = "building-89";
 
 const DATE = "2026-08-03T12:00:00+03:00";
 const text = (ar: string, en: string) => ({ ar, en });
+const buildingImages: Record<(typeof BUILDING_IDS)[number], string[]> = {
+  "building-89": ["building-89-night", "building-89-day", "lobby", "gym", "meeting-room", "parking"],
+  "nakheel-court": ["nakheel-court"],
+  "jeddah-view": ["jeddah-view"],
+  "wadi-homes": ["building-89-day"],
+};
 
 const buildings: Building[] = [
   ["building-89", "مبنى ٨٩", "Building 89", "الرياض، حي الياسمين", "Riyadh, Al Yasmin", "فريق جيرة", "Jeerah Team"],
@@ -19,16 +25,21 @@ const buildings: Building[] = [
   ["jeddah-view", "إطلالة جدة", "Jeddah View", "جدة، الشاطئ", "Jeddah, Al Shati", "فهد الحربي", "Fahad Alharbi"],
   ["wadi-homes", "منازل الوادي", "Wadi Homes", "الدمام، الفيصلية", "Dammam, Al Faisaliyah", "ريم السالم", "Reem Alsalem"],
 ].map(([id, arName, enName, arAddress, enAddress, arManager, enManager]) => ({
-  id, name: text(arName, enName), address: text(arAddress, enAddress), manager: text(arManager, enManager), imageIds: ["building-exterior"], amenityIds: ["lounge", "gym"],
+  id, name: text(arName, enName), address: text(arAddress, enAddress), manager: text(arManager, enManager), imageIds: buildingImages[id as (typeof BUILDING_IDS)[number]], amenityIds: ["lounge", "gym"],
 }));
 
-const unitIds = ["unit-89-101", "unit-89-202", "unit-89-303", "unit-nakheel-101", "unit-nakheel-202", "unit-nakheel-303", "unit-jeddah-101", "unit-jeddah-202", "unit-jeddah-303", "unit-wadi-101", "unit-wadi-202", "unit-wadi-303"];
+const unitIds = ["unit-89-1204", "unit-89-202", "unit-89-303", "unit-nakheel-101", "unit-nakheel-202", "unit-nakheel-303", "unit-jeddah-101", "unit-jeddah-202", "unit-jeddah-303", "unit-wadi-101", "unit-wadi-202", "unit-wadi-303"];
 const units: Unit[] = unitIds.map((id, index) => ({
-  id, buildingId: BUILDING_IDS[Math.floor(index / 3)], label: text(`شقة ${101 + (index % 3) * 101}`, `Apartment ${101 + (index % 3) * 101}`), floor: (index % 3) + 1,
-  status: index === 8 ? "maintenance" : index === 11 ? "vacant" : "occupied", residentIds: [], imageIds: ["unit-living-room"],
+  id,
+  buildingId: BUILDING_IDS[Math.floor(index / 3)],
+  label: id === "unit-89-1204" ? text("الوحدة ١٢٠٤", "Unit 1204") : text(`شقة ${101 + (index % 3) * 101}`, `Apartment ${101 + (index % 3) * 101}`),
+  floor: id === "unit-89-1204" ? 12 : (index % 3) + 1,
+  status: index === 8 ? "maintenance" : index === 11 ? "vacant" : "occupied",
+  residentIds: [],
+  imageIds: id === "unit-89-1204" ? ["living-room", "kitchen", "bedroom", "balcony"] : ["living-room"],
 }));
 const residents: Resident[] = [
-  ["resident-saif", "unit-89-101", "سيف الشمري", "Saif Alshammari", "owner", "active"], ["resident-lina", "unit-89-202", "لينا الحربي", "Lina Alharbi", "tenant", "active"],
+  ["resident-saif", "unit-89-1204", "سيف الدين", "Saifeldeen", "owner", "active"], ["resident-lina", "unit-89-202", "لينا الحربي", "Lina Alharbi", "tenant", "active"],
   ["resident-omar", "unit-89-303", "عمر العتيبي", "Omar Alotaibi", "family", "active"], ["resident-noura", "unit-nakheel-101", "نورة السالم", "Noura Alsalem", "owner", "active"],
   ["resident-yara", "unit-nakheel-202", "يارا الدوسري", "Yara Aldosari", "tenant", "active"], ["resident-hassan", "unit-jeddah-101", "حسن الغامدي", "Hassan Alghamdi", "owner", "active"],
   ["resident-maha", "unit-jeddah-202", "مها القحطاني", "Maha Alqahtani", "tenant", "invited"], ["resident-adel", "unit-wadi-101", "عادل السبيعي", "Adel Alsubaie", "owner", "inactive"],
@@ -36,13 +47,13 @@ const residents: Resident[] = [
 for (const unit of units) unit.residentIds = residents.filter((resident) => resident.unitId === unit.id).map((resident) => resident.id);
 
 const invoiceRows: Array<[string, string, string | undefined, string | undefined, string, string, number, Invoice["status"]]> = [
-  ["invoice-elevator", "building-89", "unit-89-101", "resident-saif", "صيانة المصعد", "Elevator maintenance", 700, "due"], ["invoice-89-paid-1", "building-89", "unit-89-202", "resident-lina", "رسوم اتحاد الملاك", "HOA fee", 950, "paid"],
-  ["invoice-89-paid-2", "building-89", "unit-89-303", "resident-omar", "خدمات المبنى", "Building services", 450, "paid"], ["invoice-89-paid-3", "building-89", "unit-89-101", "resident-saif", "صيانة المداخل", "Entrance maintenance", 300, "paid"],
+  ["invoice-elevator", "building-89", "unit-89-1204", "resident-saif", "صيانة المصعد", "Elevator maintenance", 700, "due"], ["invoice-89-paid-1", "building-89", "unit-89-202", "resident-lina", "رسوم اتحاد الملاك", "HOA fee", 950, "paid"],
+  ["invoice-89-paid-2", "building-89", "unit-89-303", "resident-omar", "خدمات المبنى", "Building services", 450, "paid"], ["invoice-89-paid-3", "building-89", "unit-89-1204", "resident-saif", "صيانة المداخل", "Entrance maintenance", 300, "paid"],
   ["invoice-nakheel-due", "nakheel-court", "unit-nakheel-101", "resident-noura", "فاتورة ماء", "Water invoice", 260, "due"], ["invoice-nakheel-overdue", "nakheel-court", "unit-nakheel-202", "resident-yara", "رسوم تأخير", "Late fee", 180, "overdue"],
   ["invoice-jeddah-upcoming", "jeddah-view", "unit-jeddah-101", "resident-hassan", "تنظيف الخزان", "Tank cleaning", 520, "upcoming"], ["invoice-jeddah-paid", "jeddah-view", "unit-jeddah-202", "resident-maha", "اشتراك الأمن", "Security subscription", 330, "paid"],
   ["invoice-wadi-due", "wadi-homes", "unit-wadi-101", "resident-adel", "صيانة دورية", "Routine maintenance", 410, "due"], ["invoice-wadi-upcoming", "wadi-homes", "unit-wadi-101", "resident-adel", "تشجير الحي", "Neighborhood landscaping", 680, "upcoming"],
 ];
-const invoices: Invoice[] = invoiceRows.map(([id, buildingId, unitId, residentId, ar, en, subtotal, status], index) => ({ id, buildingId, unitId, residentId, title: text(ar, en), category: "demo", subtotal, tax: 0, total: subtotal, dueDate: `2026-08-${String(4 + index).padStart(2, "0")}T12:00:00+03:00`, status, createdAt: DATE }));
+const invoices: Invoice[] = invoiceRows.map(([id, buildingId, unitId, residentId, ar, en, subtotal, status], index) => ({ id, buildingId, unitId, residentId, title: text(ar, en), category: "demo", subtotal, tax: 0, total: subtotal, dueDate: id === "invoice-elevator" ? "2026-08-08T12:00:00+03:00" : `2026-08-${String(4 + index).padStart(2, "0")}T12:00:00+03:00`, status, createdAt: DATE }));
 
 const serviceFamilies: ServiceFamily[] = [
   ["care-cleaning", "العناية والتنظيف", "Care & cleaning", "خدمات نظافة المنزل والمبنى", "Home and building cleaning", "sparkle"], ["home-maintenance", "صيانة المنزل", "Home maintenance", "إصلاحات موثوقة عند الطلب", "Trusted repairs on demand", "wrench"],
@@ -72,7 +83,12 @@ const serviceOfferings: ServiceOffering[] = serviceSpecs.map(([key, familyId, ar
 const providerNames = [
   ["شركة المدار للخدمات المنزلية", "Al Madar Home Services"], ["صيانة أركان", "Arkan Maintenance"], ["فنيون بالساعة", "Hourly Technicians"], ["غاز البيت", "Bayt Gas"], ["مياه صفاء", "Safa Water"], ["تجهيز النظافة", "Clean Supply Co."], ["مصاعد المدار", "Al Madar Elevators"], ["خزانات نقاء", "Naqaa Tanks"], ["مرافق الصرف", "Sarf Utilities"], ["غسيل سيارتي", "My Car Wash"], ["ورشة الطريق", "Road Workshop"], ["إطاراتك", "Your Tires"], ["بقالة الدار", "Dar Groceries"], ["خضار الحي", "Hay Produce"], ["مفروشات لينة", "Lina Linens"], ["بيت نظيف", "Clean Home"], ["رؤية آمنة", "Safe Vision Systems"], ["تصميم وجيرة", "Design & Jeerah"],
 ];
-const providers: ServiceProvider[] = providerNames.map(([ar, en], index) => ({ id: `provider-${index + 1}`, name: text(ar, en), serviceIds: serviceOfferings.filter((service) => service.providerIds.includes(`provider-${index + 1}`)).map((service) => service.id), rating: 4 + (index % 10) / 10, reviewCount: 12 + index * 7, responseMinutes: 10 + index, status: "verified-demo", imageId: "provider-avatar" }));
+const providerImageIds = [
+  "cleaning-team", "hvac-technician", "hvac-technician", "delivery-utilities", "delivery-utilities", "delivery-utilities",
+  "elevator-maintenance", "delivery-utilities", "delivery-utilities", "mobile-car-care", "mobile-car-care", "mobile-car-care",
+  "delivery-utilities", "delivery-utilities", "cleaning-team", "cleaning-team", "home-technology", "delivery-utilities",
+];
+const providers: ServiceProvider[] = providerNames.map(([ar, en], index) => ({ id: `provider-${index + 1}`, name: text(ar, en), serviceIds: serviceOfferings.filter((service) => service.providerIds.includes(`provider-${index + 1}`)).map((service) => service.id), rating: 4 + (index % 10) / 10, reviewCount: 12 + index * 7, responseMinutes: 10 + index, status: "verified-demo", imageId: providerImageIds[index] }));
 
 const residentById = new Map(residents.map((resident) => [resident.id, resident]));
 const unitById = new Map(units.map((unit) => [unit.id, unit]));
@@ -136,8 +152,20 @@ const amenityBookings: AmenityBooking[] = ["resident-saif", "resident-lina", "re
   const { buildingId } = residentLocation(residentId);
   return { id: `booking-${index + 1}`, buildingId, residentId, amenityId: index % 2 ? "gym" : "lounge", startsAt: "2026-08-05T18:00:00+03:00", status: (["upcoming", "completed", "cancelled", "upcoming", "completed", "upcoming"] as const)[index] };
 });
-const activities: Activity[] = Array.from({ length: 12 }, (_, index) => ({ id: `activity-${index + 1}`, buildingId: BUILDING_IDS[index % 4], kind: "demo", title: text("تحديث المجتمع", "Community update"), occurredAt: DATE }));
+const featuredActivities: Record<string, Pick<Activity, "kind" | "title" | "description" | "occurredAt">> = {
+  "activity-1": { kind: "landscaping", title: text("اكتملت أعمال تنسيق الحدائق", "Landscaping completed"), description: text("أمر العمل #L-2458", "Work order #L-2458"), occurredAt: "2026-08-03T10:24:00+03:00" },
+  "activity-5": { kind: "notice", title: text("تنبيه مجتمعي", "Community notice"), description: text("صيانة المياه في ٦ أغسطس", "Water maintenance on Aug 6"), occurredAt: "2026-08-02T18:30:00+03:00" },
+  "activity-9": { kind: "inspection", title: text("تمت جدولة فحص المصعد", "Elevator inspection scheduled"), description: text("الفحص هذا المساء", "Inspection this evening"), occurredAt: "2026-08-01T16:00:00+03:00" },
+};
+const activities: Activity[] = Array.from({ length: 12 }, (_, index) => {
+  const id = `activity-${index + 1}`;
+  return {
+    id,
+    buildingId: BUILDING_IDS[index % 4],
+    ...(featuredActivities[id] ?? { kind: "community", title: text("تحديث المجتمع", "Community update"), description: text("آخر مستجدات المبنى للسكان", "Latest building update for residents"), occurredAt: DATE }),
+  };
+});
 
 export function createSeedState(_now: Date = new Date(DATE)): DemoState {
-  return structuredClone({ schemaVersion: 1, locale: "ar", scenario: "normal", currentResidentId: CURRENT_RESIDENT_ID, currentBuildingId: CURRENT_BUILDING_ID, buildings, units, residents, invoices, payments, serviceFamilies, serviceOfferings, providers, orders, memberOffers, recurringPlans, neighborDeals, neighborRelationships, announcements, polls, events, visitorPasses, amenityBookings, gifts, activities, auditLog: [] } satisfies DemoState);
+  return structuredClone({ schemaVersion: 2, locale: "ar", scenario: "normal", currentResidentId: CURRENT_RESIDENT_ID, currentBuildingId: CURRENT_BUILDING_ID, buildings, units, residents, invoices, payments, serviceFamilies, serviceOfferings, providers, orders, memberOffers, recurringPlans, neighborDeals, neighborRelationships, announcements, polls, events, visitorPasses, amenityBookings, gifts, activities, auditLog: [] } satisfies DemoState);
 }
