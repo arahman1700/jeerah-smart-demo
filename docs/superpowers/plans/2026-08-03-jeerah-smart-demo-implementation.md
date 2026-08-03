@@ -121,6 +121,7 @@ CREDITS.md                                     generated assets and brand proven
 **Files:**
 - Create from template: `AGENTS.md`, `package.json`, `package-lock.json`, `index.html`, `src/`, `public/`, `scripts/`, `tests/`, `worker/`, `.openai/`
 - Modify: `AGENTS.md`
+- Modify: `.gitignore` (merge repository and template rules)
 - Modify: `package.json`
 - Modify: `tests/jeerah/helpers/renderDemo.tsx`
 - Modify: `src/Prototype.tsx`
@@ -223,12 +224,21 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     clearMocks: true,
+    include: ["tests/jeerah/**/*.test.{ts,tsx}"],
   },
 });
 
 // src/test/setup.ts
 import "@testing-library/jest-dom/vitest";
 import "fake-indexeddb/auto";
+import {
+  installAnimationFrameShim,
+  installMatchMediaShim,
+  installObjectUrlAndPrintShims,
+  installPointerAndScrollShims,
+  installResizeObserverShim,
+  installServiceWorkerShim,
+} from "./browserShims";
 
 // Install deterministic browser shims used by the real template/components.
 installMatchMediaShim();
@@ -252,9 +262,11 @@ Expected: 1 test passes.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add AGENTS.md package.json package-lock.json vitest.config.ts src/Prototype.tsx src/prototype.css src/jeerah/JeerahPrototype.tsx src/test/setup.ts src/test/browserShims.ts tests/jeerah/prototype-smoke.test.tsx
+git add .gitignore .openai AGENTS.md index.html mobile-runtime.lock.json package.json package-lock.json playwright.config.ts public scripts src tests tsconfig.json vite.config.ts vitest.config.ts worker
 git -c commit.gpgsign=false commit -m "chore: initialize Jeerah mobile prototype"
 ```
+
+The commit must contain the complete copied template, including every protected runtime file and its lock/check script. Prove the task from a fresh temporary checkout or `git archive` extraction; a dirty working tree is not evidence that the committed bootstrap is runnable.
 
 ---
 
@@ -419,6 +431,7 @@ export interface ServiceOffering {
   startingPrice?: number;
   unitLabel?: LocalizedText;
   etaMinutes?: number;
+  slaMinutes?: number;
   durationMinutes?: number;
   warrantyDays?: number;
   active: boolean;
@@ -476,7 +489,7 @@ export type DemoAction =
   | { type: "order/provider-assigned"; orderId: string; providerId: string; occurredAt: string }
   | { type: "order/rated"; orderId: string; rating: number; occurredAt: string }
   | { type: "service/availability-changed"; serviceId: string; active: boolean }
-  | { type: "service/updated"; serviceId: string; patch: Partial<Pick<ServiceOffering, "price" | "startingPrice" | "etaMinutes" | "durationMinutes" | "warrantyDays">> }
+  | { type: "service/updated"; serviceId: string; patch: Partial<Pick<ServiceOffering, "price" | "startingPrice" | "etaMinutes" | "slaMinutes" | "durationMinutes" | "warrantyDays">> }
   | { type: "quote/approved"; orderId: string; amount: number; occurredAt: string }
   | { type: "quote/rejected"; orderId: string; occurredAt: string }
   | { type: "member-offer/upserted"; offer: MemberOffer }
@@ -547,6 +560,8 @@ export function calculateCommunityPulse(state: DemoState, buildingId: string): C
 }
 ```
 
+In this task `reduceDemoState` implements every state transition except `scenario/set`; that branch returns the current state unchanged. Task 3 owns scenario composition, modifies the reducer after `applyScenario` exists, and adds the single non-recursive `scenario/set` branch there. This preserves an acyclic module dependency and keeps Task 2 independently compilable.
+
 - [ ] **Step 6: Run domain tests**
 
 Run: `npm run test:run -- tests/jeerah/domain.test.ts`  
@@ -568,6 +583,7 @@ git -c commit.gpgsign=false commit -m "feat: add Jeerah demo domain and fixtures
 - Create: `src/jeerah/data/repository.ts`
 - Create: `src/jeerah/data/DemoProvider.tsx`
 - Create: `src/jeerah/data/scenarios.ts`
+- Modify: `src/jeerah/domain/reducer.ts`
 - Test: `tests/jeerah/repository.test.ts`
 - Test: `tests/jeerah/scenarios.test.ts`
 
@@ -581,9 +597,10 @@ git -c commit.gpgsign=false commit -m "feat: add Jeerah demo domain and fixtures
 
 ```ts
 import { createDemoRepository } from "../../src/jeerah/data/repository";
+import { createMemoryStateChannelFactory } from "../../src/jeerah/data/channel";
 
 it("persists an action and reloads the same state", async () => {
-  const repo = createDemoRepository({ dbName: "jeerah-test-persist", channelName: "persist" });
+  const repo = createDemoRepository({ dbName: "jeerah-test-persist", channelName: "persist", channelFactory: createMemoryStateChannelFactory() });
   await repo.reset();
   await repo.dispatch({ type: "locale/set", locale: "ar" });
   expect((await repo.load()).state.locale).toBe("ar");
@@ -591,8 +608,9 @@ it("persists an action and reloads the same state", async () => {
 });
 
 it("notifies another repository instance", async () => {
-  const first = createDemoRepository({ dbName: "jeerah-test-sync", channelName: "sync" });
-  const second = createDemoRepository({ dbName: "jeerah-test-sync", channelName: "sync" });
+  const channelFactory = createMemoryStateChannelFactory();
+  const first = createDemoRepository({ dbName: "jeerah-test-sync", channelName: "sync", channelFactory });
+  const second = createDemoRepository({ dbName: "jeerah-test-sync", channelName: "sync", channelFactory });
   await first.reset();
   const received = new Promise<string>((resolve) => second.subscribe((snapshot) => resolve(snapshot.state.locale)));
   await first.dispatch({ type: "locale/set", locale: "ar" });
@@ -623,6 +641,8 @@ export interface SyncMessage {
   state: DemoState;
 }
 
+export type StateChannelFactory = (name: string, sourceId: string) => StateChannel;
+
 export function createStateChannel(name: string, sourceId: string): StateChannel {
   const channel = new BroadcastChannel(name);
   return {
@@ -639,7 +659,7 @@ export function createStateChannel(name: string, sourceId: string): StateChannel
 }
 ```
 
-Default transport order is `BroadcastChannel`, then a same-origin `localStorage` write plus `storage` event, then a same-realm in-memory bus only when neither browser API exists. Inject a deterministic in-memory channel in tests. Broadcast the committed snapshot, not only an event. Receivers ignore their own `sourceId` and any revision less than or equal to the local revision. Expose `syncMode: "broadcast" | "storage" | "memory"`; never claim the memory fallback synchronizes real tabs.
+Export `createMemoryStateChannelFactory(): StateChannelFactory`; every factory instance owns one deterministic named-bus registry and is explicitly closed by its repositories. Default transport order is `BroadcastChannel`, then a same-origin `localStorage` write plus `storage` event, then a same-realm in-memory bus only when neither browser API exists. Inject the deterministic factory in every repository and live-twin test. Broadcast the committed snapshot, not only an event. Receivers ignore their own `sourceId` and any revision less than or equal to the local revision. Expose `syncMode: "broadcast" | "storage" | "memory"`; never claim the memory fallback synchronizes real tabs.
 
 - [ ] **Step 4: Implement the repository contract**
 
@@ -668,6 +688,7 @@ export interface RepositoryOptions {
   dbName?: string;
   channelName?: string;
   sourceId?: string;
+  channelFactory?: StateChannelFactory;
   now?: () => Date;
 }
 ```
@@ -731,7 +752,7 @@ Expected: persistence, reset, fallback, scenario, and cross-instance tests pass.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add src/jeerah/data tests/jeerah/repository.test.ts tests/jeerah/scenarios.test.ts
+git add src/jeerah/data src/jeerah/domain/reducer.ts tests/jeerah/repository.test.ts tests/jeerah/scenarios.test.ts
 git -c commit.gpgsign=false commit -m "feat: add persistent synchronized demo store"
 ```
 
@@ -764,12 +785,14 @@ git -c commit.gpgsign=false commit -m "feat: add persistent synchronized demo st
 - [ ] **Step 1: Write failing routing, RTL, and brand tests**
 
 ```tsx
+import { MobileRuntime } from "../../src/mobile/MobileRuntime";
+
 it("uses direct resident mode on narrow app URLs", () => {
   expect(getRouteMode(new URL("https://demo.test/?surface=app"), "browser", 390)).toBe("resident");
 });
 
 it("sets Arabic direction on the direct surface", async () => {
-  render(<JeerahPrototype />);
+  render(<MobileRuntime><JeerahPrototype /></MobileRuntime>);
   await userEvent.click(screen.getByRole("button", { name: /العربية/i }));
   expect(screen.getByRole("application", { name: /jeerah smart demo/i })).toHaveAttribute("dir", "rtl");
 });
@@ -936,11 +959,15 @@ git -c commit.gpgsign=false commit -m "feat: add Jeerah shell and design system"
 - Create: `public/brands/mada.svg`
 - Create: `scripts/verify-assets.mjs`
 - Create: `CREDITS.md`
+- Modify: `src/jeerah/design/JeerahLogo.tsx`
+- Modify: `src/jeerah/design/PaymentBrand.tsx`
+- Modify: `src/jeerah/design/fonts.css`
+- Create: `src/jeerah/design/BrandFontFaces.tsx`
 - Test: `tests/jeerah/assets.test.ts`
 
 **Interfaces:**
 - Produces: `BrandManifestEntry { id, path, sourcePath, sha256, role }` for exact archive-derived files.
-- Produces: `AssetManifestEntry { id, category, path, ratio, alt: { ar, en }, provenance }` for generated photography.
+- Produces: `AssetManifestEntry { id, category, path, sha256, ratio, alt: { ar, en }, provenance }` for generated photography.
 - Produces stable IDs referenced by fixtures and UI.
 
 - [ ] **Step 1: Write failing brand and content-asset tests**
@@ -965,6 +992,7 @@ it("contains a complete local photography set", () => {
   expect(new Set(content.map((entry) => entry.category))).toEqual(new Set(["building", "apartment", "amenity", "service"]));
   for (const entry of content) {
     expect(entry.path).toMatch(/^assets\/.+\.webp$/);
+    expect(entry.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(entry.alt.ar.length).toBeGreaterThan(12);
     expect(entry.alt.en.length).toBeGreaterThan(12);
     expect(entry.provenance).toMatch(/ImageGen/i);
@@ -1043,6 +1071,7 @@ The shared prompt must request photo-realistic Saudi/Gulf architecture, a restra
   "id": "building-89-night",
   "category": "building",
   "path": "assets/buildings/building-89-night.webp",
+  "sha256": "<64 lowercase hex characters calculated from the final WebP>",
   "ratio": "16:9",
   "alt": {
     "ar": "واجهة مبنى 89 السكني في الرياض ليلًا",
@@ -1052,7 +1081,7 @@ The shared prompt must request photo-realistic Saudi/Gulf architecture, a restra
 }
 ```
 
-`assetUrl(path, base = import.meta.env.BASE_URL)` normalizes the supplied base with one trailing slash, rejects absolute, network, and traversal paths, and returns a base-prefixed runtime URL. Every logo, pattern, font, photograph, install icon, and payment-brand reference in React resolves through this helper, so the same bundle works at `/` and `/jeerah-smart-demo/`.
+`assetUrl(path, base = import.meta.env.BASE_URL)` normalizes the supplied base with one trailing slash, rejects absolute, network, and traversal paths, and returns a base-prefixed runtime URL. Migrate the existing `JeerahLogo` and `PaymentBrand` references in this task. `BrandFontFaces` emits the three `@font-face` rules from `assetUrl(...)`; `fonts.css` contains only family/weight application rules and no root-relative URLs. Every logo, pattern, font, photograph, install icon, and payment-brand reference in React resolves through this helper, so the same bundle works at `/` and `/jeerah-smart-demo/`.
 
 `scripts/verify-assets.mjs` reads both source manifests, resolves their relative paths against `public/`, and must fail when a manifest entry is absent, empty, outside its expected public directory, has the wrong SHA-256, exceeds 600 KB for content photography, lacks bilingual alt text, or references the zero-byte source. It must also verify icon dimensions and that every required logo/font/pattern role appears once.
 
@@ -1067,7 +1096,7 @@ Expected: all identity, metadata, hash, dimension, and asset-coverage tests pass
 - [ ] **Step 9: Commit**
 
 ```bash
-git add src/jeerah/assets public/brand public/assets public/icons public/brands scripts/verify-assets.mjs CREDITS.md tests/jeerah/assets.test.ts
+git add src/jeerah/assets src/jeerah/design/JeerahLogo.tsx src/jeerah/design/PaymentBrand.tsx src/jeerah/design/fonts.css src/jeerah/design/BrandFontFaces.tsx public/brand public/assets public/icons public/brands scripts/verify-assets.mjs CREDITS.md tests/jeerah/assets.test.ts
 git -c commit.gpgsign=false commit -m "feat: adopt official Jeerah identity and visual assets"
 ```
 
@@ -1268,7 +1297,7 @@ export async function simulatePayment(attempt: PaymentAttempt, options: Simulati
 
 - [ ] **Step 4: Build the five-step flow**
 
-The exact steps are `method → review → verify → processing → result`. Apple Pay uses an in-product confirm action, mada uses visible demo OTP `1234`, and Visa uses a labeled demo 3-D Secure confirm. Never render full card-number or CVV fields. The scenario studio can force `paid`, `pending`, `declined`, `cancelled`, `timed-out`, or `refunded`.
+The exact steps are `method → review → verify → processing → result`. Apple Pay uses an in-product confirm action, mada uses visible demo OTP `1234`, and Visa uses a labeled demo 3-D Secure confirm. Never render full card-number or CVV fields. The payment test harness and `PaymentFlow.forcedOutcome` can force `paid`, `pending`, `declined`, `cancelled`, `timed-out`, or `refunded`; Scenario Studio intentionally exposes only the single `declined` payment scenario already present in `DemoScenario`.
 
 - [ ] **Step 5: Dispatch payment effects**
 
@@ -1823,7 +1852,13 @@ gh api user --jq .login
 gh repo create arahman1700/jeerah-smart-demo --public --source=. --remote=origin --description "Installable Jeerah Smart resident and admin demo"
 git push -u origin HEAD:main
 gh api -X POST repos/arahman1700/jeerah-smart-demo/pages -f build_type=workflow
-run_id=$(gh run list --repo arahman1700/jeerah-smart-demo --workflow "Deploy Jeerah Demo" --branch main --limit 1 --json databaseId --jq '.[0].databaseId')
+release_sha=$(git rev-parse HEAD)
+run_id=""
+for attempt in {1..30}; do
+  run_id=$(gh run list --repo arahman1700/jeerah-smart-demo --workflow "Deploy Jeerah Demo" --branch main --commit "$release_sha" --limit 1 --json databaseId --jq '.[0].databaseId')
+  test -n "$run_id" && break
+  sleep 2
+done
 test -n "$run_id"
 gh run watch "$run_id" --repo arahman1700/jeerah-smart-demo --exit-status
 ```
@@ -1849,10 +1884,10 @@ Write the repository URL, GitHub Pages URL, resident query URL, admin query URL,
 
 ## Plan Self-Review Checklist
 
-- [ ] Every section of the approved design spec maps to Tasks 2–12.
-- [ ] Every referenced type and function is introduced before consumption.
-- [ ] No task modifies the protected mobile runtime files.
-- [ ] No task captures real payment or identity data.
-- [ ] Every task ends with an independently verifiable deliverable and commit.
-- [ ] The final release verifier covers runtime integrity, unit/UI tests, build, and assets.
-- [ ] Browser QA uses the in-app Browser and compares the accepted reference with the implementation.
+- [x] Every section of the approved design spec maps to Tasks 2–12.
+- [x] Every referenced type and function is introduced before consumption.
+- [x] No task modifies the protected mobile runtime files.
+- [x] No task captures real payment or identity data.
+- [x] Every task ends with an independently verifiable deliverable and commit.
+- [x] The final release verifier covers runtime integrity, unit/UI tests, build, and assets.
+- [x] Browser QA uses the in-app Browser and compares the accepted reference with the implementation.
