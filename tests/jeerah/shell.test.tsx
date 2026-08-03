@@ -31,6 +31,7 @@ import {
   residentStatusMessageKey,
   recurringPlanCadenceMessageKey,
   requiredPlanMessageKeys,
+  requiredPlanCategoryPrefixes,
   serviceFulfillmentMessageKey,
   serviceFamilyMessageKey,
   servicePricingMessageKey,
@@ -189,6 +190,14 @@ describe("Jeerah shell", () => {
       expect(messages.en[key].trim(), `English ${key}`).not.toHaveLength(0);
       expect(messages.ar[key].trim(), `Arabic ${key}`).not.toHaveLength(0);
     }
+  });
+
+  it("does not let required contract categories self-omit existing messages", () => {
+    const inventory = new Set(requiredPlanMessageKeys);
+    const requiredCategoryKeys = Object.keys(messages.en)
+      .filter((key) => requiredPlanCategoryPrefixes.some((prefix) => key.startsWith(prefix)));
+
+    expect(requiredCategoryKeys.every((key) => inventory.has(key))).toBe(true);
   });
 
   it.each([
