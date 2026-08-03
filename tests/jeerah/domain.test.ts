@@ -279,7 +279,10 @@ describe("Jeerah demo domain", () => {
     verify(reduceDemoState(state, action));
   });
 
-  it("leaves scenario selection to Task 3", () => {
-    expect(reduceDemoState(state, { type: "scenario/set", scenario: "offline" })).toBe(state);
+  it("composes scenario selection without mutating the input", () => {
+    const next = reduceDemoState(state, { type: "scenario/set", scenario: "offline" });
+    expect(next).not.toBe(state);
+    expect(next.scenario).toBe("offline");
+    expect(next.auditLog).toHaveLength(1);
   });
 });

@@ -1,5 +1,6 @@
 import { createSeedState } from "./fixtures";
 import type { DemoAction, DemoState, OrderStatus, Payment, ServiceOrder } from "./models";
+import { applyScenario } from "../data/scenarios";
 
 const note = (status: OrderStatus) => ({ ar: `تم تحديث الطلب إلى ${status}`, en: `Order updated to ${status}` });
 const hasId = <T extends { id: string }>(items: T[], id: string) => items.some((item) => item.id === id);
@@ -34,8 +35,21 @@ function reconcileInvoice(state: DemoState, payments: Payment[], invoiceId: stri
 export function reduceDemoState(state: DemoState, action: DemoAction): DemoState {
   switch (action.type) {
     case "locale/set": return { ...state, locale: action.locale };
-    // Task 3 composes scenarios. Keeping this branch an identity transition prevents a dependency cycle.
-    case "scenario/set": return state;
+    case "scenario/set": {
+      const scenarioState = applyScenario(state, action.scenario);
+      return {
+        ...scenarioState,
+        auditLog: [...scenarioState.auditLog, {
+          id: `audit-scenario-${action.scenario}-${scenarioState.auditLog.length + 1}`,
+          actorId: scenarioState.currentResidentId,
+          action: "scenario/set",
+          entityType: "scenario",
+          entityId: action.scenario,
+          description: { ar: "تم تغيير سيناريو العرض", en: "Demo scenario changed" },
+          occurredAt: "2026-08-03T12:00:00+03:00",
+        }],
+      };
+    }
     case "invoice/created": return validInvoice(state, action.invoice) && !hasId(state.invoices, action.invoice.id) ? { ...state, invoices: [...state.invoices, action.invoice] } : state;
     case "payment/recorded": {
       if (!validPayment(state, action.payment) || hasId(state.payments, action.payment.id)) return state;
