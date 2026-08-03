@@ -17,22 +17,45 @@ export interface AssetManifestEntry {
   provenance: string;
 }
 
-function unsafeAssetPath(path: string) {
-  let decoded = path;
-  try {
-    decoded = decodeURIComponent(path);
-  } catch {
-    return true;
-  }
+const MAX_DECODE_ROUNDS = 4;
+const encodedByte = /%[a-f\d]{2}/i;
 
+function unsafeDecodedPath(path: string) {
   return (
     path.length === 0
     || path.startsWith("/")
     || path.startsWith("\\")
     || path.includes("\\")
     || /^[a-z][a-z\d+.-]*:/i.test(path)
-    || decoded.split("/").some((segment) => segment === ".." || segment === ".")
+    || path.split(/[\\/]/).some((segment) => segment === ".." || segment === ".")
   );
+}
+
+function unsafeAssetPath(path: string) {
+  let decoded = path;
+
+  for (let round = 0; round < MAX_DECODE_ROUNDS; round += 1) {
+    if (unsafeDecodedPath(decoded)) return true;
+    if (!decoded.includes("%")) return false;
+
+    if (!encodedByte.test(decoded)) {
+      return round === 0;
+    }
+
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return true;
+    }
+
+    const slashCount = (decoded.match(/\//g) ?? []).length;
+    const nextSlashCount = (next.match(/\//g) ?? []).length;
+    if (nextSlashCount > slashCount) return true;
+    decoded = next;
+  }
+
+  return unsafeDecodedPath(decoded) || encodedByte.test(decoded);
 }
 
 export function assetUrl(path: string, base = import.meta.env.BASE_URL) {

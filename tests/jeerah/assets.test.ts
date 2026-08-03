@@ -92,6 +92,34 @@ describe("Jeerah asset contracts", () => {
     expect(() => assetUrl(path, "/jeerah-smart-demo/")).toThrow(/asset path/i);
   });
 
+  it.each([
+    "assets/%5c..%5cprivate.txt",
+    "assets/%255c..%255cprivate.txt",
+    "assets%2fprivate.txt",
+    "assets%252fprivate.txt",
+    "assets%255cprivate.txt",
+    "assets/%252f..%252fprivate.txt",
+    "assets/%252e%252e/private.txt",
+    "assets/%252525252e%252525252e/private.txt",
+  ])("rejects encoded separators and traversal at every decoding layer: %s", (path) => {
+    expect(() => assetUrl(path, "/jeerah-smart-demo/")).toThrow(/asset path/i);
+  });
+
+  it.each([
+    "assets/%2/private.webp",
+    "assets/%E0%A4%A/private.webp",
+  ])("rejects malformed percent encoding: %s", (path) => {
+    expect(() => assetUrl(path, "/jeerah-smart-demo/")).toThrow(/asset path/i);
+  });
+
+  it.each([
+    "assets/buildings/building%2089.webp",
+    "assets/buildings/citt%C3%A0.webp",
+    "assets/buildings/offer%25-sale.webp",
+  ])("preserves safe percent-encoded ordinary filenames: %s", (path) => {
+    expect(assetUrl(path, "/jeerah-smart-demo/")).toBe(`/jeerah-smart-demo/${path}`);
+  });
+
   it("loads all official font faces through the base-aware asset resolver", () => {
     const { container } = render(createElement(JeerahLogo, { locale: "en", background: "dark" }));
     const fontFaces = container.querySelector("style[data-jeerah-brand-fonts]")?.textContent;
