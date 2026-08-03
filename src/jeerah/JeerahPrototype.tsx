@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type PropsWithChildren } from "react";
 import { getRouteMode, type SurfaceMode } from "./app/routeMode";
 import { SurfacePortal } from "./app/SurfacePortal";
+import { DemoProvider, type DemoProviderProps } from "./data/DemoProvider";
 import { JeerahLogo } from "./design/JeerahLogo";
 import { I18nProvider, useI18n } from "./i18n/I18nProvider";
 
@@ -25,12 +26,12 @@ function useSurfaceMode() {
   return mode;
 }
 
-function JeerahShell({ mode }: { mode: SurfaceMode }) {
+function JeerahShell({ mode, children }: PropsWithChildren<{ mode: SurfaceMode }>) {
   const { dir, locale, setLocale, t } = useI18n();
   const nextLocale = locale === "ar" ? "en" : "ar";
 
   return (
-    <main role="application" aria-label="Jeerah Smart demo" className="jeerah-root" dir={dir} lang={locale} data-surface={mode}>
+    <main role="application" aria-label={t("app.demo")} className="jeerah-root" dir={dir} lang={locale} data-surface={mode}>
       <header className="jeerah-shell-header">
         <JeerahLogo locale={locale} background="dark" />
         <button type="button" onClick={() => setLocale(nextLocale)}>
@@ -40,13 +41,20 @@ function JeerahShell({ mode }: { mode: SurfaceMode }) {
       <section className="jeerah-shell-intro" aria-label={t("app.name")}>
         <p>{t("payment.simulation_notice")}</p>
       </section>
+      {children}
     </main>
   );
 }
 
-export default function JeerahPrototype() {
-  const mode = useSurfaceMode();
-  const surface = <JeerahShell mode={mode} />;
+export type JeerahPrototypeProps = Pick<DemoProviderProps, "repository" | "createRepository"> & PropsWithChildren;
 
-  return <I18nProvider>{mode === "preview" ? surface : <SurfacePortal mode={mode}>{surface}</SurfacePortal>}</I18nProvider>;
+export default function JeerahPrototype({ children, repository, createRepository }: JeerahPrototypeProps) {
+  const mode = useSurfaceMode();
+  const surface = <JeerahShell mode={mode}>{children}</JeerahShell>;
+
+  return (
+    <DemoProvider repository={repository} createRepository={createRepository}>
+      <I18nProvider>{mode === "preview" ? surface : <SurfacePortal mode={mode}>{surface}</SurfacePortal>}</I18nProvider>
+    </DemoProvider>
+  );
 }

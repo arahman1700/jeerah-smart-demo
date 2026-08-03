@@ -1,18 +1,24 @@
-import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useMemo, type PropsWithChildren } from "react";
 import type { Locale } from "../domain/models";
-import { translate, type MessageKey } from "./messages";
+import { useDemoDispatch, useDemoState } from "../data/DemoProvider";
+import { normalizeLocale, translate, type MessageKey } from "./messages";
 
 type I18nValue = {
   locale: Locale;
   dir: "rtl" | "ltr";
   t: (key: MessageKey, values?: Record<string, string | number>) => string;
-  setLocale: (locale: Locale) => void;
+  setLocale: (locale: Locale) => Promise<void>;
 };
 
 const I18nContext = createContext<I18nValue | null>(null);
 
-export function I18nProvider({ children, initialLocale = "en" }: PropsWithChildren<{ initialLocale?: Locale }>) {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
+export function I18nProvider({ children, fallbackLocale = "en" }: PropsWithChildren<{ fallbackLocale?: Locale }>) {
+  const state = useDemoState();
+  const dispatch = useDemoDispatch();
+  const locale = normalizeLocale(state.locale, fallbackLocale);
+  const setLocale = useCallback(async (nextLocale: Locale) => {
+    await dispatch({ type: "locale/set", locale: normalizeLocale(nextLocale, fallbackLocale) });
+  }, [dispatch, fallbackLocale]);
   const t = useCallback((key: MessageKey, values?: Record<string, string | number>) => translate(locale, key, values), [locale]);
   const value = useMemo<I18nValue>(() => ({ locale, dir: locale === "ar" ? "rtl" : "ltr", t, setLocale }), [locale, t]);
 

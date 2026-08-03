@@ -1,11 +1,11 @@
 import { createPortal } from "react-dom";
-import { useLayoutEffect, useState, type PropsWithChildren } from "react";
+import { useLayoutEffect, useMemo, type PropsWithChildren } from "react";
 import type { SurfaceMode } from "./routeMode";
 
 type DirectSurfaceMode = Exclude<SurfaceMode, "preview">;
 
 export function SurfacePortal({ mode, children }: PropsWithChildren<{ mode: DirectSurfaceMode }>) {
-  const [host] = useState(() => Object.assign(document.createElement("div"), { id: `jeerah-${mode}-surface` }));
+  const host = useMemo(() => Object.assign(document.createElement("div"), { id: `jeerah-${mode}-surface` }), [mode]);
 
   useLayoutEffect(() => {
     document.body.dataset.jeerahSurface = mode;

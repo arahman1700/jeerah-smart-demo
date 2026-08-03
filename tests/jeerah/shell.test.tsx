@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MobileRuntime } from "../../src/mobile/MobileRuntime";
@@ -7,9 +7,52 @@ import { getRouteMode } from "../../src/jeerah/app/routeMode";
 import { SurfacePortal } from "../../src/jeerah/app/SurfacePortal";
 import { JeerahLogo } from "../../src/jeerah/design/JeerahLogo";
 import { PaymentBrand } from "../../src/jeerah/design/PaymentBrand";
+import { useDemoState } from "../../src/jeerah/data/DemoProvider";
+import { createMemoryDemoRepository, type DemoRepository } from "../../src/jeerah/data/repository";
+import { createSeedState } from "../../src/jeerah/domain/fixtures";
+import type { DemoState } from "../../src/jeerah/domain/models";
+import {
+  amenityBookingStatusMessageKey,
+  announcementPriorityMessageKey,
+  demoScenarioMessageKey,
+  eventStatusMessageKey,
+  invoiceStatusMessageKey,
+  invitationStatusMessageKey,
+  neighborGiftStatusMessageKey,
+  orderStatusMessageKey,
+  paymentMethodMessageKey,
+  paymentStatusMessageKey,
+  pollStatusMessageKey,
+  propertyStatusMessageKey,
+  providerStatusMessageKey,
+  quoteStatusMessageKey,
+  residentStatusMessageKey,
+  serviceFulfillmentMessageKey,
+  serviceFamilyMessageKey,
+  servicePricingMessageKey,
+  serviceScopeMessageKey,
+  translate,
+  unitStatusMessageKey,
+  visitorPassStatusMessageKey,
+} from "../../src/jeerah/i18n/messages";
+
+const repositories = new Set<DemoRepository>();
+
+function makeRepository(locale: "ar" | "en", channelName = `shell-${Math.random()}`) {
+  const repository = createMemoryDemoRepository({ ...createSeedState(), locale }, channelName);
+  repositories.add(repository);
+  return repository;
+}
+
+function FutureStateProbe() {
+  const state = useDemoState();
+  return <output data-testid="future-state-probe">{state.locale}</output>;
+}
 
 afterEach(() => {
   cleanup();
+  repositories.forEach((repository) => repository.close());
+  repositories.clear();
   window.history.replaceState({}, "", "/");
 });
 
@@ -26,11 +69,47 @@ describe("Jeerah shell", () => {
   it("sets Arabic direction on the direct surface", async () => {
     window.history.replaceState({}, "", "/?surface=app");
     const user = userEvent.setup();
-    render(<MobileRuntime><JeerahPrototype /></MobileRuntime>);
+    render(<MobileRuntime><JeerahPrototype repository={makeRepository("en")} /></MobileRuntime>);
 
-    await user.click(screen.getByRole("button", { name: /العربية/i }));
+    await user.click(await screen.findByRole("button", { name: /العربية/i }));
 
     expect(screen.getByRole("application", { name: /jeerah smart demo/i })).toHaveAttribute("dir", "rtl");
+  });
+
+  it("persists a locale choice and receives the same locale in a synchronized repository", async () => {
+    window.history.replaceState({}, "", "/?surface=app");
+    const user = userEvent.setup();
+    const channelName = "shell-locale-sync";
+    const repository = makeRepository("en", channelName);
+    const peer = makeRepository("en", channelName);
+    const view = render(<MobileRuntime><JeerahPrototype repository={repository} /></MobileRuntime>);
+
+    await user.click(await screen.findByRole("button", { name: /العربية/i }));
+
+    await waitFor(async () => expect((await repository.load()).state.locale).toBe("ar"));
+    await waitFor(async () => expect((await peer.load()).state.locale).toBe("ar"));
+
+    view.unmount();
+    render(<MobileRuntime><JeerahPrototype repository={repository} /></MobileRuntime>);
+    expect(await screen.findByRole("button", { name: "English" })).toBeInTheDocument();
+  });
+
+  it("uses the safe locale when persisted state is malformed, then persists a valid choice", async () => {
+    window.history.replaceState({}, "", "/?surface=app");
+    const user = userEvent.setup();
+    const repository = createMemoryDemoRepository({ ...createSeedState(), locale: "malformed" } as unknown as DemoState, "shell-malformed-locale");
+    repositories.add(repository);
+    render(<MobileRuntime><JeerahPrototype repository={repository} /></MobileRuntime>);
+
+    expect(await screen.findByRole("application", { name: "Jeerah Smart demo" })).toHaveAttribute("lang", "en");
+    await user.click(screen.getByRole("button", { name: /العربية/i }));
+    await waitFor(async () => expect((await repository.load()).state.locale).toBe("ar"));
+  });
+
+  it("mounts future data-driven screens inside the shared DemoProvider", async () => {
+    render(<MobileRuntime><JeerahPrototype repository={makeRepository("en")}><FutureStateProbe /></JeerahPrototype></MobileRuntime>);
+
+    expect(await screen.findByTestId("future-state-probe")).toHaveTextContent("en");
   });
 
   it("removes its direct-surface host and body state on unmount", () => {
@@ -43,6 +122,56 @@ describe("Jeerah shell", () => {
 
     expect(document.body.dataset.jeerahSurface).toBeUndefined();
     expect(document.querySelector("#jeerah-resident-surface")).not.toBeInTheDocument();
+  });
+
+  it("recreates the direct-surface host when the mode changes", () => {
+    const view = render(<SurfacePortal mode="resident"><p>Resident</p></SurfacePortal>);
+
+    view.rerender(<SurfacePortal mode="admin"><p>Admin</p></SurfacePortal>);
+
+    expect(document.body.dataset.jeerahSurface).toBe("admin");
+    expect(document.querySelector("#jeerah-resident-surface")).not.toBeInTheDocument();
+    expect(document.querySelector("#jeerah-admin-surface")).toHaveTextContent("Admin");
+  });
+
+  it("falls back from malformed runtime locales and rejects unresolved placeholders", () => {
+    expect(translate("not-a-locale", "message.welcome", { name: "Saif" })).toBe("Welcome back, Saif");
+    expect(translate("en", "message.welcome", { name: "Saif", ignored: 1 })).toBe("Welcome back, Saif");
+    expect(translate("en", "message.repeat", { name: "Saif" })).toBe("Saif is ready, Saif.");
+    expect(() => translate("en", "message.welcome")).toThrow("Missing value for message placeholder {name}");
+  });
+
+  it("maps every planned domain status to a translatable message", () => {
+    const maps = [
+      propertyStatusMessageKey,
+      unitStatusMessageKey,
+      residentStatusMessageKey,
+      providerStatusMessageKey,
+      invoiceStatusMessageKey,
+      paymentMethodMessageKey,
+      paymentStatusMessageKey,
+      orderStatusMessageKey,
+      quoteStatusMessageKey,
+      announcementPriorityMessageKey,
+      pollStatusMessageKey,
+      eventStatusMessageKey,
+      invitationStatusMessageKey,
+      visitorPassStatusMessageKey,
+      amenityBookingStatusMessageKey,
+      neighborGiftStatusMessageKey,
+      serviceScopeMessageKey,
+      serviceFulfillmentMessageKey,
+      servicePricingMessageKey,
+      serviceFamilyMessageKey,
+      demoScenarioMessageKey,
+    ];
+
+    for (const map of maps) {
+      for (const key of Object.values(map)) {
+        expect(translate("ar", key)).not.toMatch(/^[A-Z_]{3,}\.[A-Z_]{3,}/);
+        expect(translate("en", key)).not.toMatch(/^[A-Z_]{3,}\.[A-Z_]{3,}/);
+      }
+    }
   });
 
   it.each([

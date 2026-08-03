@@ -1,4 +1,21 @@
-import type { Locale } from "../domain/models";
+import type {
+  AmenityBooking,
+  Announcement,
+  DemoScenario,
+  InvoiceStatus,
+  NeighborGift,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+  PricingModel,
+  Resident,
+  ServiceFulfillment,
+  ServiceFamilyId,
+  ServiceProvider,
+  ServiceScope,
+  Unit,
+  VisitorPass,
+} from "../domain/models";
 
 const en = {
   "app.name": "Jeerah Smart",
@@ -156,11 +173,72 @@ const en = {
   "scenario.reset_instruction": "Type RESET to restore the demo.",
   "message.welcome": "Welcome back, {name}",
   "message.items": "{count} items",
+  "message.repeat": "{name} is ready, {name}.",
+  "property.active": "Active property",
+  "property.archived": "Archived property",
+  "unit.occupied": "Occupied",
+  "unit.vacant": "Vacant",
+  "unit.maintenance": "Under maintenance",
+  "resident.owner": "Owner",
+  "resident.tenant": "Tenant",
+  "resident.family": "Family member",
+  "resident.active": "Active resident",
+  "resident.invited": "Invited resident",
+  "resident.inactive": "Inactive resident",
+  "provider.verified_demo": "Verified demo provider",
+  "provider.new": "New provider",
+  "provider.paused": "Paused provider",
+  "provider.review": "Provider under review",
+  "quote.awaiting": "Awaiting quote",
+  "quote.ready": "Quote ready",
+  "quote.approved": "Quote approved",
+  "quote.rejected": "Quote rejected",
+  "announcement.normal": "Normal announcement",
+  "announcement.important": "Important announcement",
+  "announcement.urgent": "Urgent announcement",
+  "poll.open": "Open poll",
+  "poll.closed": "Closed poll",
+  "event.upcoming": "Upcoming event",
+  "event.ongoing": "Event in progress",
+  "event.completed": "Completed event",
+  "event.cancelled": "Cancelled event",
+  "invitation.pending": "Invitation pending",
+  "invitation.accepted": "Invitation accepted",
+  "invitation.declined": "Invitation declined",
+  "invitation.expired": "Invitation expired",
+  "visitor.active": "Active visitor pass",
+  "visitor.expired": "Expired visitor pass",
+  "visitor.revoked": "Revoked visitor pass",
+  "amenity.upcoming": "Upcoming booking",
+  "amenity.completed": "Completed booking",
+  "amenity.cancelled": "Cancelled booking",
+  "gift.sent": "Gift sent",
+  "gift.redeemed": "Gift redeemed",
+  "service.scope.apartment": "Apartment service",
+  "service.scope.building": "Building service",
+  "service.scope.both": "Apartment and building service",
+  "service.fulfillment.on_demand": "On demand",
+  "service.fulfillment.scheduled": "Scheduled",
+  "service.fulfillment.recurring": "Recurring",
+  "service.fulfillment.quote": "Quote required",
+  "service.fulfillment.group": "Group service",
+  "service.pricing.fixed": "Fixed price",
+  "service.pricing.starting_at": "Starting at",
+  "service.pricing.per_unit": "Per unit",
+  "service.pricing.quote_required": "Quote required",
+  "family.care_cleaning": "Care and cleaning",
+  "family.home_maintenance": "Home maintenance",
+  "family.building_tech_safety": "Building technology and safety",
+  "family.water_utilities": "Water and utilities",
+  "family.automotive_mobility": "Automotive and mobility",
+  "family.daily_needs": "Daily needs",
+  "family.home_fitout_moving": "Home fit-out and moving",
+  "family.community_membership": "Community and membership",
 } as const;
 
 const ar: Record<keyof typeof en, string> = {
   "app.name": "جيرة سمارت",
-  "app.demo": "نسخة جيرة سمارت التجريبية",
+  "app.demo": "Jeerah Smart demo — نسخة جيرة سمارت التجريبية",
   "language.arabic": "العربية",
   "language.english": "English",
   "language.switch_to_arabic": "تغيير اللغة إلى العربية",
@@ -314,12 +392,105 @@ const ar: Record<keyof typeof en, string> = {
   "scenario.reset_instruction": "اكتب RESET لاستعادة النسخة التجريبية.",
   "message.welcome": "مرحبًا بعودتك، {name}",
   "message.items": "{count} عناصر",
+  "message.repeat": "{name} جاهز، {name}.",
+  "property.active": "عقار نشط",
+  "property.archived": "عقار مؤرشف",
+  "unit.occupied": "مشغولة",
+  "unit.vacant": "شاغرة",
+  "unit.maintenance": "تحت الصيانة",
+  "resident.owner": "مالك",
+  "resident.tenant": "مستأجر",
+  "resident.family": "فرد من العائلة",
+  "resident.active": "ساكن نشط",
+  "resident.invited": "ساكن مدعو",
+  "resident.inactive": "ساكن غير نشط",
+  "provider.verified_demo": "مزود تحقق تجريبيًا",
+  "provider.new": "مزود جديد",
+  "provider.paused": "مزود متوقف مؤقتًا",
+  "provider.review": "مزود قيد المراجعة",
+  "quote.awaiting": "بانتظار عرض السعر",
+  "quote.ready": "عرض السعر جاهز",
+  "quote.approved": "تم اعتماد عرض السعر",
+  "quote.rejected": "تم رفض عرض السعر",
+  "announcement.normal": "إعلان عادي",
+  "announcement.important": "إعلان مهم",
+  "announcement.urgent": "إعلان عاجل",
+  "poll.open": "استطلاع مفتوح",
+  "poll.closed": "استطلاع مغلق",
+  "event.upcoming": "فعالية قادمة",
+  "event.ongoing": "فعالية جارية",
+  "event.completed": "فعالية مكتملة",
+  "event.cancelled": "فعالية ملغاة",
+  "invitation.pending": "الدعوة قيد الانتظار",
+  "invitation.accepted": "تم قبول الدعوة",
+  "invitation.declined": "تم رفض الدعوة",
+  "invitation.expired": "انتهت صلاحية الدعوة",
+  "visitor.active": "تصريح زائر نشط",
+  "visitor.expired": "انتهت صلاحية تصريح الزائر",
+  "visitor.revoked": "تم إلغاء تصريح الزائر",
+  "amenity.upcoming": "حجز قادم",
+  "amenity.completed": "حجز مكتمل",
+  "amenity.cancelled": "حجز ملغى",
+  "gift.sent": "تم إرسال الهدية",
+  "gift.redeemed": "تم استرداد الهدية",
+  "service.scope.apartment": "خدمة للشقة",
+  "service.scope.building": "خدمة للمبنى",
+  "service.scope.both": "خدمة للشقة والمبنى",
+  "service.fulfillment.on_demand": "عند الطلب",
+  "service.fulfillment.scheduled": "مجدولة",
+  "service.fulfillment.recurring": "متكررة",
+  "service.fulfillment.quote": "تتطلب عرض سعر",
+  "service.fulfillment.group": "خدمة جماعية",
+  "service.pricing.fixed": "سعر ثابت",
+  "service.pricing.starting_at": "يبدأ من",
+  "service.pricing.per_unit": "لكل وحدة",
+  "service.pricing.quote_required": "يتطلب عرض سعر",
+  "family.care_cleaning": "العناية والتنظيف",
+  "family.home_maintenance": "صيانة المنزل",
+  "family.building_tech_safety": "تقنية وسلامة المبنى",
+  "family.water_utilities": "المياه والمرافق",
+  "family.automotive_mobility": "السيارات والتنقل",
+  "family.daily_needs": "الاحتياجات اليومية",
+  "family.home_fitout_moving": "التشطيب ونقل الأثاث",
+  "family.community_membership": "المجتمع والعضوية",
 };
 
 export const messages = { en, ar } as const;
 export type MessageKey = keyof typeof messages.en;
 
-export function translate(locale: Locale, key: MessageKey, values: Record<string, string | number> = {}) {
-  const template = messages[locale][key] ?? messages.en[key];
+export function normalizeLocale(locale: unknown, fallback: "ar" | "en" = "en") {
+  return locale === "ar" || locale === "en" ? locale : fallback;
+}
+
+export function translate(locale: unknown, key: MessageKey, values: Record<string, string | number> = {}) {
+  if (!Object.hasOwn(messages.en, key)) throw new Error(`Unknown message key: ${String(key)}`);
+  const template = messages[normalizeLocale(locale)][key] ?? messages.en[key];
+  const placeholders = new Set(Array.from(template.matchAll(/\{([A-Za-z0-9_]+)\}/g), (match) => match[1]));
+  for (const placeholder of placeholders) {
+    if (!Object.hasOwn(values, placeholder)) throw new Error(`Missing value for message placeholder {${placeholder}}`);
+  }
   return Object.entries(values).reduce((copy, [name, value]) => copy.replaceAll(`{${name}}`, String(value)), template);
 }
+
+export const propertyStatusMessageKey = { active: "property.active", archived: "property.archived" } as const;
+export const unitStatusMessageKey: Record<Unit["status"], MessageKey> = { occupied: "unit.occupied", vacant: "unit.vacant", maintenance: "unit.maintenance" };
+export const residentStatusMessageKey: Record<Resident["status"], MessageKey> = { active: "resident.active", invited: "resident.invited", inactive: "resident.inactive" };
+export const residentRoleMessageKey: Record<Resident["role"], MessageKey> = { owner: "resident.owner", tenant: "resident.tenant", family: "resident.family" };
+export const providerStatusMessageKey: Record<ServiceProvider["status"], MessageKey> = { "verified-demo": "provider.verified_demo", new: "provider.new", paused: "provider.paused", review: "provider.review" };
+export const invoiceStatusMessageKey: Record<InvoiceStatus, MessageKey> = { due: "status.due", paid: "status.paid", overdue: "status.overdue", upcoming: "status.upcoming" };
+export const paymentStatusMessageKey: Record<PaymentStatus, MessageKey> = { paid: "status.paid", pending: "status.pending", declined: "status.declined", cancelled: "status.cancelled", "timed-out": "status.timed_out", refunded: "status.refunded" };
+export const paymentMethodMessageKey: Record<PaymentMethod, MessageKey> = { "apple-pay": "payment.apple_pay", mada: "payment.mada", visa: "payment.visa" };
+export const orderStatusMessageKey: Record<OrderStatus, MessageKey> = { "awaiting-quote": "status.awaiting_quote", "quote-ready": "status.quote_ready", scheduled: "status.scheduled", confirmed: "status.confirmed", assigned: "status.assigned", "en-route": "status.en_route", "in-progress": "status.in_progress", "awaiting-resident-approval": "status.awaiting_resident_approval", completed: "status.completed", cancelled: "status.cancelled", refunded: "status.refunded" };
+export const quoteStatusMessageKey = { awaiting: "quote.awaiting", ready: "quote.ready", approved: "quote.approved", rejected: "quote.rejected" } as const;
+export const announcementPriorityMessageKey: Record<Announcement["priority"], MessageKey> = { normal: "announcement.normal", important: "announcement.important", urgent: "announcement.urgent" };
+export const pollStatusMessageKey = { open: "poll.open", closed: "poll.closed" } as const;
+export const eventStatusMessageKey = { upcoming: "event.upcoming", ongoing: "event.ongoing", completed: "event.completed", cancelled: "event.cancelled" } as const;
+export const invitationStatusMessageKey = { pending: "invitation.pending", accepted: "invitation.accepted", declined: "invitation.declined", expired: "invitation.expired" } as const;
+export const visitorPassStatusMessageKey: Record<VisitorPass["status"], MessageKey> = { active: "visitor.active", expired: "visitor.expired", revoked: "visitor.revoked" };
+export const amenityBookingStatusMessageKey: Record<AmenityBooking["status"], MessageKey> = { upcoming: "amenity.upcoming", completed: "amenity.completed", cancelled: "amenity.cancelled" };
+export const neighborGiftStatusMessageKey: Record<NeighborGift["status"], MessageKey> = { sent: "gift.sent", redeemed: "gift.redeemed" };
+export const serviceScopeMessageKey: Record<ServiceScope, MessageKey> = { apartment: "service.scope.apartment", building: "service.scope.building", both: "service.scope.both" };
+export const serviceFulfillmentMessageKey: Record<ServiceFulfillment, MessageKey> = { "on-demand": "service.fulfillment.on_demand", scheduled: "service.fulfillment.scheduled", recurring: "service.fulfillment.recurring", quote: "service.fulfillment.quote", group: "service.fulfillment.group" };
+export const servicePricingMessageKey: Record<PricingModel, MessageKey> = { fixed: "service.pricing.fixed", "starting-at": "service.pricing.starting_at", "per-unit": "service.pricing.per_unit", "quote-required": "service.pricing.quote_required" };
+export const serviceFamilyMessageKey: Record<ServiceFamilyId, MessageKey> = { "care-cleaning": "family.care_cleaning", "home-maintenance": "family.home_maintenance", "building-tech-safety": "family.building_tech_safety", "water-utilities": "family.water_utilities", "automotive-mobility": "family.automotive_mobility", "daily-needs": "family.daily_needs", "home-fitout-moving": "family.home_fitout_moving", "community-membership": "family.community_membership" };
+export const demoScenarioMessageKey: Record<DemoScenario, MessageKey> = { normal: "scenario.normal", empty: "scenario.empty", offline: "scenario.offline", overdue: "scenario.overdue", declined: "scenario.declined", "urgent-maintenance": "scenario.urgent_maintenance" };
