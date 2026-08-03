@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { calculateCommunityPulse } from "../../src/jeerah/domain/communityPulse";
 import { createSeedState } from "../../src/jeerah/domain/fixtures";
 import { formatDate, formatSar, normalizeSearchText } from "../../src/jeerah/domain/format";
-import { REQUIRED_SERVICE_KEYS } from "../../src/jeerah/domain/models";
+import { REQUIRED_SERVICE_KEYS, type DemoAction } from "../../src/jeerah/domain/models";
 import { reduceDemoState } from "../../src/jeerah/domain/reducer";
 import { searchServiceCatalog } from "../../src/jeerah/domain/serviceCatalog";
 
 const state = createSeedState(new Date("2026-08-03T12:00:00+03:00"));
+const DATE = "2026-08-03T12:00:00+03:00";
 
 describe("Jeerah demo domain", () => {
   it("ships complete deterministic demo coverage", () => {
@@ -42,10 +43,105 @@ describe("Jeerah demo domain", () => {
     expect(new Set(state.serviceOfferings.map((service) => service.familyId)).size).toBe(8);
   });
 
+  it("keeps every seeded relationship and current payment state internally consistent", () => {
+    const buildingIds = new Set(state.buildings.map((item) => item.id));
+    const units = new Map(state.units.map((item) => [item.id, item]));
+    const residents = new Map(state.residents.map((item) => [item.id, item]));
+    const invoices = new Map(state.invoices.map((item) => [item.id, item]));
+    const services = new Map(state.serviceOfferings.map((item) => [item.id, item]));
+    const providers = new Map(state.providers.map((item) => [item.id, item]));
+
+    for (const unit of state.units) expect(buildingIds.has(unit.buildingId)).toBe(true);
+    for (const resident of state.residents) expect(units.get(resident.unitId)?.residentIds).toContain(resident.id);
+    for (const invoice of state.invoices) {
+      expect(buildingIds.has(invoice.buildingId)).toBe(true);
+      if (invoice.unitId) expect(units.get(invoice.unitId)?.buildingId).toBe(invoice.buildingId);
+      if (invoice.residentId) {
+        expect(residents.get(invoice.residentId)?.unitId).toBe(invoice.unitId);
+        expect(units.get(residents.get(invoice.residentId)!.unitId)?.buildingId).toBe(invoice.buildingId);
+      }
+    }
+    for (const payment of state.payments) {
+      const invoice = invoices.get(payment.invoiceId);
+      expect(invoice).toBeDefined();
+      expect(payment.residentId).toBe(invoice?.residentId);
+    }
+    for (const invoice of state.invoices) {
+      const hasSuccessfulPayment = state.payments.some((payment) => payment.invoiceId === invoice.id && payment.status === "paid");
+      expect(invoice.status === "paid").toBe(hasSuccessfulPayment);
+    }
+    for (const order of state.orders) {
+      const resident = residents.get(order.residentId);
+      expect(resident).toBeDefined();
+      expect(units.get(order.unitId!)?.buildingId).toBe(order.buildingId);
+      expect(units.get(resident!.unitId)?.buildingId).toBe(order.buildingId);
+      expect(services.has(order.serviceId)).toBe(true);
+      expect(providers.get(order.providerId!)?.serviceIds).toContain(order.serviceId);
+      if (["awaiting-quote", "cancelled"].includes(order.status)) expect(order.paymentStatus).not.toBe("paid");
+    }
+    for (const pass of state.visitorPasses) {
+      expect(units.get(pass.unitId)?.buildingId).toBe(pass.buildingId);
+      expect(residents.get(pass.residentId)?.unitId).toBe(pass.unitId);
+    }
+    for (const booking of state.amenityBookings) expect(units.get(residents.get(booking.residentId)!.unitId)?.buildingId).toBe(booking.buildingId);
+    for (const poll of state.polls) for (const option of poll.options) for (const voterId of option.voterIds) expect(units.get(residents.get(voterId)!.unitId)?.buildingId).toBe(poll.buildingId);
+    for (const event of state.events) for (const attendeeId of event.attendeeIds) expect(units.get(residents.get(attendeeId)!.unitId)?.buildingId).toBe(event.buildingId);
+    for (const provider of state.providers) for (const serviceId of provider.serviceIds) expect(services.get(serviceId)?.providerIds).toContain(provider.id);
+    for (const offer of state.memberOffers) expect(services.has(offer.serviceId)).toBe(true);
+    for (const plan of state.recurringPlans) {
+      expect(services.has(plan.serviceId)).toBe(true);
+      expect(residents.has(plan.residentId)).toBe(true);
+    }
+    for (const deal of state.neighborDeals) {
+      expect(services.has(deal.serviceId)).toBe(true);
+      expect(buildingIds.has(deal.buildingId)).toBe(true);
+      for (const residentId of deal.participantIds) expect(units.get(residents.get(residentId)!.unitId)?.buildingId).toBe(deal.buildingId);
+    }
+    const relationships = new Set(state.neighborRelationships.map((item) => item.id));
+    for (const gift of state.gifts) {
+      expect(services.has(gift.serviceId)).toBe(true);
+      expect(residents.has(gift.senderId)).toBe(true);
+      expect(relationships.has(gift.recipientRelationshipId)).toBe(true);
+    }
+    for (const announcement of state.announcements) expect(buildingIds.has(announcement.buildingId)).toBe(true);
+    for (const activity of state.activities) expect(buildingIds.has(activity.buildingId)).toBe(true);
+  });
+
+  it("uses mutually exclusive pricing fields for every pricing model", () => {
+    for (const service of state.serviceOfferings) {
+      if (service.pricingModel === "fixed") {
+        expect(service.price).toBeTypeOf("number");
+        expect(service.startingPrice).toBeUndefined();
+        expect(service.unitLabel).toBeUndefined();
+      } else if (service.pricingModel === "starting-at") {
+        expect(service.startingPrice).toBeTypeOf("number");
+        expect(service.price).toBeUndefined();
+        expect(service.unitLabel).toBeUndefined();
+      } else if (service.pricingModel === "per-unit") {
+        expect(service.price).toBeTypeOf("number");
+        expect(service.unitLabel?.ar).toBeTruthy();
+        expect(service.unitLabel?.en).toBeTruthy();
+        expect(service.startingPrice).toBeUndefined();
+      } else {
+        expect(service.price).toBeUndefined();
+        expect(service.startingPrice).toBeUndefined();
+        expect(service.unitLabel).toBeUndefined();
+      }
+    }
+  });
+
   it("normalizes Arabic search text while retaining localized service search", () => {
     expect(normalizeSearchText("إزالة التَّكْيِيفـة")).toBe("ازاله التكييفه");
     expect(searchServiceCatalog(state, "تكييف", {}).map((service) => service.key)).toContain("hvac-maintenance");
     expect(searchServiceCatalog(state, "car", { scope: "apartment" }).map((service) => service.key)).toContain("mobile-car-wash");
+  });
+
+  it("combines every supported service filter", () => {
+    const service = state.serviceOfferings.find((item) => item.fulfillment.includes("recurring"))!;
+    expect(searchServiceCatalog(state, "", { familyId: service.familyId })).toContainEqual(service);
+    expect(searchServiceCatalog(state, "", { fulfillment: "recurring" })).toContainEqual(service);
+    expect(searchServiceCatalog(state, "", { active: true })).toContainEqual(service);
+    expect(searchServiceCatalog(state, "", { providerId: service.providerIds[0] })).toContainEqual(service);
   });
 
   it("formats values deterministically", () => {
@@ -78,6 +174,69 @@ describe("Jeerah demo domain", () => {
     expect(next).not.toBe(state);
     expect(next.invoices.find((item) => item.id === "invoice-elevator")?.status).toBe("paid");
     expect(state.invoices.find((item) => item.id === "invoice-elevator")?.status).not.toBe("paid");
+  });
+
+  it.each(["refunded", "declined", "cancelled", "timed-out"] as const)("reconciles an invoice to due when its paid payment becomes %s", (status) => {
+    const next = reduceDemoState(state, { type: "payment/status-changed", paymentId: "payment-2", status, occurredAt: "2026-08-03T12:10:00+03:00" });
+    expect(next.payments.find((payment) => payment.id === "payment-2")?.status).toBe(status);
+    expect(next.invoices.find((invoice) => invoice.id === "invoice-89-paid-1")?.status).toBe("due");
+  });
+
+  it("does not discard an existing vote when a poll or option ID is invalid", () => {
+    const unknownPoll = reduceDemoState(state, { type: "poll/voted", pollId: "not-a-poll", optionId: "any", residentId: "resident-saif" });
+    const unknownOption = reduceDemoState(state, { type: "poll/voted", pollId: "poll-1", optionId: "not-an-option", residentId: "resident-saif" });
+    expect(unknownPoll).toBe(state);
+    expect(unknownOption).toBe(state);
+    expect(unknownOption.polls.find((poll) => poll.id === "poll-1")?.options[0].voterIds).toContain("resident-saif");
+  });
+
+  it.each([
+    [{ type: "payment/status-changed", paymentId: "missing", status: "paid", occurredAt: DATE }, "payments"],
+    [{ type: "order/status-changed", orderId: "missing", status: "completed", occurredAt: DATE }, "orders"],
+    [{ type: "service/availability-changed", serviceId: "missing", active: false }, "serviceOfferings"],
+    [{ type: "member-offer/disabled", offerId: "missing" }, "memberOffers"],
+    [{ type: "recurring-plan/toggled", planId: "missing", active: false }, "recurringPlans"],
+    [{ type: "neighbor-deal/joined", dealId: "missing", residentId: "resident-saif" }, "neighborDeals"],
+    [{ type: "building/updated", buildingId: "missing", patch: {} }, "buildings"],
+    [{ type: "unit/updated", unitId: "missing", patch: {} }, "units"],
+    [{ type: "resident/updated", residentId: "missing", patch: {} }, "residents"],
+    [{ type: "event/rsvp", eventId: "missing", residentId: "resident-saif", attending: true }, "events"],
+  ] as const)("returns the original state for invalid %s targets", (action) => {
+    expect(reduceDemoState(state, action)).toBe(state);
+  });
+
+  it.each([
+    { name: "sets locale", action: { type: "locale/set", locale: "en" }, verify: (next: typeof state) => expect(next.locale).toBe("en") },
+    { name: "creates invoices", action: { type: "invoice/created", invoice: { ...state.invoices[0], id: "invoice-created" } }, verify: (next: typeof state) => expect(next.invoices).toHaveLength(11) },
+    { name: "records payments", action: { type: "payment/recorded", payment: { ...state.payments[0], id: "payment-created", status: "paid" } }, verify: (next: typeof state) => expect(next.invoices.find((invoice) => invoice.id === "invoice-elevator")?.status).toBe("paid") },
+    { name: "changes payment statuses", action: { type: "payment/status-changed", paymentId: "payment-1", status: "paid", occurredAt: DATE }, verify: (next: typeof state) => expect(next.payments.find((payment) => payment.id === "payment-1")?.status).toBe("paid") },
+    { name: "creates orders", action: { type: "order/created", order: { ...state.orders[0], id: "order-created" } }, verify: (next: typeof state) => expect(next.orders).toHaveLength(19) },
+    { name: "changes order statuses", action: { type: "order/status-changed", orderId: "order-1", status: "completed", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-1")?.timeline).toHaveLength(2) },
+    { name: "assigns order providers", action: { type: "order/provider-assigned", orderId: "order-1", providerId: "provider-1", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-1")?.status).toBe("assigned") },
+    { name: "rates orders", action: { type: "order/rated", orderId: "order-1", rating: 5, occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-1")?.rating).toBe(5) },
+    { name: "changes service availability", action: { type: "service/availability-changed", serviceId: state.serviceOfferings[0].id, active: false }, verify: (next: typeof state) => expect(next.serviceOfferings[0].active).toBe(false) },
+    { name: "updates service metadata", action: { type: "service/updated", serviceId: state.serviceOfferings[0].id, patch: { etaMinutes: 99 } }, verify: (next: typeof state) => expect(next.serviceOfferings[0].etaMinutes).toBe(99) },
+    { name: "approves quotes", action: { type: "quote/approved", orderId: "order-9", amount: 450, occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-9")?.amount).toBe(450) },
+    { name: "rejects quotes", action: { type: "quote/rejected", orderId: "order-10", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-10")?.paymentStatus).toBe("cancelled") },
+    { name: "upserts member offers", action: { type: "member-offer/upserted", offer: { ...state.memberOffers[0], id: "offer-created" } }, verify: (next: typeof state) => expect(next.memberOffers).toHaveLength(9) },
+    { name: "disables member offers", action: { type: "member-offer/disabled", offerId: "member-offer-1" }, verify: (next: typeof state) => expect(next.memberOffers[0].active).toBe(false) },
+    { name: "upserts recurring plans", action: { type: "recurring-plan/upserted", plan: { ...state.recurringPlans[0], id: "plan-created" } }, verify: (next: typeof state) => expect(next.recurringPlans).toHaveLength(6) },
+    { name: "toggles recurring plans", action: { type: "recurring-plan/toggled", planId: "plan-1", active: false }, verify: (next: typeof state) => expect(next.recurringPlans[0].active).toBe(false) },
+    { name: "skips recurring dates", action: { type: "recurring-plan/next-skipped", planId: "plan-1", date: DATE }, verify: (next: typeof state) => expect(next.recurringPlans[0].skippedDates).toContain(DATE) },
+    { name: "joins neighbor deals", action: { type: "neighbor-deal/joined", dealId: "deal-1", residentId: "resident-lina" }, verify: (next: typeof state) => expect(next.neighborDeals[0].participantIds).toContain("resident-lina") },
+    { name: "sends neighbor gifts", action: { type: "neighbor-gift/sent", gift: { ...state.gifts[0], id: "gift-created" } }, verify: (next: typeof state) => expect(next.gifts).toHaveLength(3) },
+    { name: "updates buildings", action: { type: "building/updated", buildingId: "building-89", patch: { manager: { ar: "مدير", en: "Manager" } } }, verify: (next: typeof state) => expect(next.buildings[0].manager.en).toBe("Manager") },
+    { name: "updates units", action: { type: "unit/updated", unitId: "unit-89-101", patch: { status: "maintenance" } }, verify: (next: typeof state) => expect(next.units[0].status).toBe("maintenance") },
+    { name: "updates residents", action: { type: "resident/updated", residentId: "resident-saif", patch: { role: "tenant" } }, verify: (next: typeof state) => expect(next.residents[0].role).toBe("tenant") },
+    { name: "publishes announcements", action: { type: "announcement/published", announcement: { ...state.announcements[0], id: "announcement-created" } }, verify: (next: typeof state) => expect(next.announcements).toHaveLength(7) },
+    { name: "creates polls", action: { type: "poll/created", poll: { ...state.polls[0], id: "poll-created" } }, verify: (next: typeof state) => expect(next.polls).toHaveLength(3) },
+    { name: "creates visitor passes", action: { type: "visitor-pass/created", pass: { ...state.visitorPasses[0], id: "pass-created" } }, verify: (next: typeof state) => expect(next.visitorPasses).toHaveLength(6) },
+    { name: "creates amenity bookings", action: { type: "amenity-booking/created", booking: { ...state.amenityBookings[0], id: "booking-created" } }, verify: (next: typeof state) => expect(next.amenityBookings).toHaveLength(7) },
+    { name: "moves poll votes", action: { type: "poll/voted", pollId: "poll-1", optionId: "poll-1-evening", residentId: "resident-saif" }, verify: (next: typeof state) => expect(next.polls[0].options[1].voterIds).toContain("resident-saif") },
+    { name: "records event RSVPs", action: { type: "event/rsvp", eventId: "event-1", residentId: "resident-saif", attending: false }, verify: (next: typeof state) => expect(next.events[0].attendeeIds).not.toContain("resident-saif") },
+    { name: "resets demo state", action: { type: "demo/reset" }, verify: (next: typeof state) => expect(next).not.toBe(state) },
+  ] as Array<{ name: string; action: DemoAction; verify: (next: typeof state) => void }>)("$name", ({ action, verify }) => {
+    verify(reduceDemoState(state, action));
   });
 
   it("leaves scenario selection to Task 3", () => {
