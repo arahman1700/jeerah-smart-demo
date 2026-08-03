@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type PropsWithChildren } from "react";
 import type { DemoAction, DemoState } from "../domain/models";
 import { createDemoRepository, type DemoMeta, type DemoRepository } from "./repository";
 
@@ -8,27 +8,36 @@ const DemoDispatchContext = createContext<((action: DemoAction) => Promise<DemoS
 
 export interface DemoProviderProps extends PropsWithChildren {
   repository?: DemoRepository;
+  createRepository?: () => DemoRepository;
 }
 
-export function DemoProvider({ children, repository: suppliedRepository }: DemoProviderProps) {
-  const repository = useMemo(() => suppliedRepository ?? createDemoRepository(), [suppliedRepository]);
-  const [snapshot, setSnapshot] = useState(() => ({ state: null as DemoState | null, meta: null as DemoMeta | null }));
+export function DemoProvider({ children, repository: suppliedRepository, createRepository = createDemoRepository }: DemoProviderProps) {
+  const [repository, setRepository] = useState<DemoRepository | null>(suppliedRepository ?? null);
+  const [snapshot, setSnapshot] = useState<{ state: DemoState | null; meta: DemoMeta | null }>({ state: null, meta: null });
 
   useEffect(() => {
+    const activeRepository = suppliedRepository ?? createRepository();
     let active = true;
-    void repository.load().then((next) => {
+    setRepository(activeRepository);
+    setSnapshot({ state: null, meta: null });
+    void activeRepository.load().then((next) => {
       if (active) setSnapshot(next);
     });
-    const unsubscribe = repository.subscribe((next) => setSnapshot(next));
+    const unsubscribe = activeRepository.subscribe((next) => {
+      if (active) setSnapshot(next);
+    });
     return () => {
       active = false;
       unsubscribe();
-      if (!suppliedRepository) repository.close();
+      if (!suppliedRepository) activeRepository.close();
     };
-  }, [repository, suppliedRepository]);
+  }, [suppliedRepository, createRepository]);
 
-  const dispatch = useMemo(() => async (action: DemoAction) => (await repository.dispatch(action)).state, [repository]);
-  if (!snapshot.state || !snapshot.meta) return null;
+  const dispatch = useCallback(async (action: DemoAction) => {
+    if (!repository) throw new Error("DemoProvider has not initialized its repository");
+    return (await repository.dispatch(action)).state;
+  }, [repository]);
+  if (!repository || !snapshot.state || !snapshot.meta) return null;
   return <DemoStateContext value={snapshot.state}><DemoMetaContext value={snapshot.meta}><DemoDispatchContext value={dispatch}>{children}</DemoDispatchContext></DemoMetaContext></DemoStateContext>;
 }
 

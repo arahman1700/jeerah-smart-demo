@@ -1,4 +1,4 @@
-import { openDB, type IDBPDatabase } from "idb";
+import { openDB, type IDBPDatabase, type IDBPTransaction } from "idb";
 import { createStateChannel, createMemoryStateChannelFactory, type StateChannel, type StateChannelFactory, type SyncMode } from "./channel";
 import { createSeedState } from "../domain/fixtures";
 import type { DemoAction, DemoState } from "../domain/models";
@@ -75,18 +75,30 @@ function createRepository(options: InternalOptions = {}): DemoRepository {
     state: clone(state),
     meta: { revision, storageMode, syncMode: channel.syncMode, lastSyncAt },
   });
-  const emit = () => {
-    const next = snapshot();
-    listeners.forEach((listener) => listener(next));
+  const notify = () => {
+    listeners.forEach((listener) => {
+      try {
+        listener(snapshot());
+      } catch {
+        // A UI observer cannot invalidate an already committed repository transition.
+      }
+    });
+    try {
+      channel.publish({ type: "snapshot-committed", sourceId, revision, state: clone(state) });
+    } catch {
+      // Synchronization is best-effort after the durable commit has completed.
+    }
   };
-  const publish = () => channel.publish({ type: "snapshot-committed", sourceId, revision, state: clone(state) });
+  const finishCommit = () => {
+    const committed = snapshot();
+    notify();
+    return committed;
+  };
   const commitMemory = (transition: (current: DemoState) => DemoState) => {
     state = transition(state);
     revision += 1;
     lastSyncAt = now().toISOString();
-    emit();
-    publish();
-    return snapshot();
+    return finishCommit();
   };
   const database = () => {
     if (!dbPromise) {
@@ -101,33 +113,49 @@ function createRepository(options: InternalOptions = {}): DemoRepository {
   };
   const commit = async (transition: (current: DemoState) => DemoState): Promise<RepositorySnapshot> => {
     if (storageMode === "memory") return commitMemory(transition);
+    let db: IDBPDatabase<DemoDatabase>;
     try {
-      const db = await database();
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      const existing = await tx.store.get(STATE_KEY);
-      const base = existing ? existing.value : state;
-      const nextState = transition(clone(base));
-      const nextRevision = (existing?.revision ?? revision) + 1;
-      const updatedAt = now().toISOString();
-      await tx.store.put({ key: STATE_KEY, revision: nextRevision, value: nextState, updatedAt });
-      await tx.done;
-      state = nextState;
-      revision = nextRevision;
-      lastSyncAt = updatedAt;
-      emit();
-      publish();
-      return snapshot();
+      db = await database();
     } catch {
       storageMode = "memory";
       return commitMemory(transition);
     }
+    let tx: IDBPTransaction<DemoDatabase, [typeof STORE_NAME], "readwrite">;
+    let existing: PersistedState | undefined;
+    try {
+      tx = db.transaction(STORE_NAME, "readwrite");
+      existing = await tx.store.get(STATE_KEY);
+    } catch {
+      storageMode = "memory";
+      return commitMemory(transition);
+    }
+    const nextState = transition(clone(existing ? existing.value : state));
+    const nextRevision = (existing?.revision ?? revision) + 1;
+    const updatedAt = now().toISOString();
+    try {
+      await tx.store.put({ key: STATE_KEY, revision: nextRevision, value: nextState, updatedAt });
+      await tx.done;
+    } catch {
+      storageMode = "memory";
+      return commitMemory(transition);
+    }
+    state = nextState;
+    revision = nextRevision;
+    lastSyncAt = updatedAt;
+    return finishCommit();
   };
   const unsubscribeChannel = channel.subscribe((message) => {
-    if (closed || message.revision <= revision) return;
+    if (closed || message.sourceId === sourceId || message.revision <= revision) return;
     state = clone(message.state);
     revision = message.revision;
     lastSyncAt = now().toISOString();
-    emit();
+    listeners.forEach((listener) => {
+      try {
+        listener(snapshot());
+      } catch {
+        // A subscriber cannot prevent other observers from receiving a remote snapshot.
+      }
+    });
   });
 
   return {
