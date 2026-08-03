@@ -1,0 +1,186 @@
+[
+  {
+    "id": "horizontal-logo-en-dark",
+    "path": "brand/logos/horizontal-logo-1.svg",
+    "sourcePath": "1-LOGO/2-Horizontal Logo/SVG/Horizontal Logo 1.svg",
+    "sha256": "702856937822d9b77e431b43347d69220b95cfb1d11fc6cdd2287156e95066c2",
+    "role": "logo-en-dark"
+  },
+  {
+    "id": "horizontal-logo-ar-dark",
+    "path": "brand/logos/horizontal-logo-2.svg",
+    "sourcePath": "1-LOGO/2-Horizontal Logo/SVG/Horizontal Logo 2.svg",
+    "sha256": "1c79ec65cb08207cc5ef7ff050d864688e4b86423ca0ae2cdbe890d23d1a1ba3",
+    "role": "logo-ar-dark"
+  },
+  {
+    "id": "horizontal-logo-en-light",
+    "path": "brand/logos/horizontal-logo-3.svg",
+    "sourcePath": "1-LOGO/2-Horizontal Logo/SVG/Horizontal Logo 3.svg",
+    "sha256": "5c16a0db239f02f8aeb76d48fa57f45478253de3f0fade8ad09becd68dc4546e",
+    "role": "logo-en-light"
+  },
+  {
+    "id": "horizontal-logo-ar-light",
+    "path": "brand/logos/horizontal-logo-4.svg",
+    "sourcePath": "1-LOGO/2-Horizontal Logo/SVG/Horizontal Logo 4.svg",
+    "sha256": "ea07be3955305e921ce68d1641996c834f36a9d1df4ec4d28646d8ffb793db98",
+    "role": "logo-ar-light"
+  },
+  {
+    "id": "mark-dark",
+    "path": "brand/logos/mark-dark.svg",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 1.svg",
+    "sha256": "08ff08939786af5e1d6393efe029f1c5d0f12070630b07a0cd3644d1cbb598ce",
+    "role": "logo-mark-dark"
+  },
+  {
+    "id": "mark-light",
+    "path": "brand/logos/mark-light.svg",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 3.svg",
+    "sha256": "77a588f8fc2461651010ec5e7b52d325e6a488106525828434e46d31be9ff578",
+    "role": "logo-mark-light"
+  },
+  {
+    "id": "pattern-dark",
+    "path": "brand/patterns/pattern-dark.png",
+    "sourcePath": "3-Pattern/PNG/BG2.png",
+    "sha256": "1bae4e52e0121428a8ab0b68bd6dfa922dcca38ab8bd3460fb54cef9cfa18975",
+    "role": "pattern-dark"
+  },
+  {
+    "id": "pattern-light",
+    "path": "brand/patterns/pattern-light.png",
+    "sourcePath": "3-Pattern/PNG/BG1.png",
+    "sha256": "0b313914bd7b9d0fb5c91f783ae81e178d0fb6b071fa94e9be34dcd9d591b5f6",
+    "role": "pattern-light",
+    "transform": "Cropped one right-edge pixel to 2000x2000 without resampling"
+  },
+  {
+    "id": "pattern-overlay",
+    "path": "brand/patterns/pattern-overlay.png",
+    "sourcePath": "3-Pattern/PNG/Transparant.png",
+    "sha256": "59f61574f65de8c8fa2d6e790c64b8a193eb228b4493b1d8b7e2db5eaada7246",
+    "role": "pattern-overlay"
+  },
+  {
+    "id": "font-plus-jakarta-sans",
+    "path": "brand/fonts/plus-jakarta-sans-variable.woff2",
+    "sourcePath": "6-Font/1-Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf",
+    "sha256": "8eef75960d22121d98c3c72d935edd93e3797c016e264e09b204f86776f013d0",
+    "role": "font-en",
+    "transform": "Converted to WOFF2 without subsetting"
+  },
+  {
+    "id": "font-montserrat",
+    "path": "brand/fonts/montserrat-variable.woff2",
+    "sourcePath": "6-Font/2-Montserrat/Montserrat-VariableFont_wght.ttf",
+    "sha256": "c8c6e1272ce308c4f96ee0469ef4f2002be253619f8ebc684700424078325cb4",
+    "role": "font-support",
+    "transform": "Converted to WOFF2 without subsetting"
+  },
+  {
+    "id": "font-readex-pro",
+    "path": "brand/fonts/readex-pro-variable.woff2",
+    "sourcePath": "6-Font/3-Readex_Pro/ReadexPro-VariableFont_HEXP,wght.ttf",
+    "sha256": "3939127659dc24f8c952c6ca71b4b5986e8308ed6fccfae2a859080f9f56ec04",
+    "role": "font-ar",
+    "transform": "Converted to WOFF2 without subsetting"
+  },
+  {
+    "id": "font-license-plus-jakarta-sans",
+    "path": "brand/fonts/plus-jakarta-sans-OFL.txt",
+    "sourcePath": "6-Font/1-Plus_Jakarta_Sans/OFL.txt",
+    "sha256": "5b9fded5ff4620cc114cf1edabd242621011a60ba8c08207d7d583f8d601e38c",
+    "role": "font-license-en",
+    "transform": "Normalized text line endings and trailing whitespace"
+  },
+  {
+    "id": "font-license-montserrat",
+    "path": "brand/fonts/montserrat-OFL.txt",
+    "sourcePath": "6-Font/2-Montserrat/OFL.txt",
+    "sha256": "861d64229728cd65a98d119612c12769582574d1a092f0b63c8b0fd474e7065f",
+    "role": "font-license-support",
+    "transform": "Normalized text line endings and trailing whitespace"
+  },
+  {
+    "id": "font-license-readex-pro",
+    "path": "brand/fonts/readex-pro-OFL.txt",
+    "sourcePath": "6-Font/3-Readex_Pro/OFL.txt",
+    "sha256": "40669d10dc6170bff88137164b6059988b2c2e41ed5aba587bc6ac12df21bf85",
+    "role": "font-license-ar",
+    "transform": "Normalized text line endings and trailing whitespace"
+  },
+  {
+    "id": "favicon-dark-16",
+    "path": "brand/favicon/favicon-dark-16.png",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 1.svg",
+    "sha256": "113dfdcc9ed61a705ba5b880865dec7dfe801cb152bbac59621f7f73b135ab07",
+    "role": "favicon-dark-16",
+    "transform": "Rasterized to exact 16x16 PNG"
+  },
+  {
+    "id": "favicon-dark-32",
+    "path": "brand/favicon/favicon-dark-32.png",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 1.svg",
+    "sha256": "8b7f08489fe313049b137b3b7ec646b9bed1867c69d09f8279db6ec6a1e06a93",
+    "role": "favicon",
+    "transform": "Rasterized to exact 32x32 PNG"
+  },
+  {
+    "id": "favicon-dark-64",
+    "path": "brand/favicon/favicon-dark-64.png",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 1.svg",
+    "sha256": "6b5c4a4b5c0afc2ff3c77f30b65d81042ce063d7166ab502313f0028a433d0e2",
+    "role": "favicon-dark-64",
+    "transform": "Rasterized to exact 64x64 PNG"
+  },
+  {
+    "id": "favicon-light-16",
+    "path": "brand/favicon/favicon-light-16.png",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 3.svg",
+    "sha256": "4dc08c5b62b5710541ed4d94c9351ac2aaea75fa33f71d579977de662d54cf02",
+    "role": "favicon-light-16",
+    "transform": "Rasterized to exact 16x16 PNG"
+  },
+  {
+    "id": "favicon-light-32",
+    "path": "brand/favicon/favicon-light-32.png",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 3.svg",
+    "sha256": "8153a4766ebe75c29e07f30df198ae3d8b6217e040d016ed1cee236c4dc46f72",
+    "role": "favicon-light-32",
+    "transform": "Rasterized to exact 32x32 PNG"
+  },
+  {
+    "id": "favicon-light-64",
+    "path": "brand/favicon/favicon-light-64.png",
+    "sourcePath": "1-LOGO/4-Icon/SVG/Icon 3.svg",
+    "sha256": "9c63c24c80d50b2a1c9dac3951e5e478fece005c4b281f026263190f8ee91ed9",
+    "role": "favicon-light-64",
+    "transform": "Rasterized to exact 64x64 PNG"
+  },
+  {
+    "id": "app-icon-512",
+    "path": "icons/icon-512.png",
+    "sourcePath": "1-LOGO/5-App Icon - ايقونة تطبيق/Android/Icon الايقونة512 (Android).png",
+    "sha256": "ac85b9b44169d77e58002b31e18a65b9ea996e642addfdbb9ae749f01db63504",
+    "role": "app-icon-512",
+    "transform": "Copied unchanged"
+  },
+  {
+    "id": "app-icon-192",
+    "path": "icons/icon-192.png",
+    "sourcePath": "1-LOGO/5-App Icon - ايقونة تطبيق/Android/Icon الايقونة512 (Android).png",
+    "sha256": "110eba4b57441d29939c8985340731397a6bcd8abea7caccb15fa1f5b6a2eeb1",
+    "role": "app-icon-192",
+    "transform": "Proportional resize to 192x192"
+  },
+  {
+    "id": "apple-touch-icon",
+    "path": "icons/apple-touch-icon.png",
+    "sourcePath": "1-LOGO/5-App Icon - ايقونة تطبيق/Android/Icon الايقونة512 (Android).png",
+    "sha256": "23b8a90cad8c9e22968a4b9656b15e86e90ed1c41b471e76636527ccd59d245d",
+    "role": "apple-touch-icon",
+    "transform": "Proportional resize to 180x180"
+  }
+]

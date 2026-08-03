@@ -1,0 +1,164 @@
+[
+  {
+    "id": "building-89-night",
+    "category": "building",
+    "path": "assets/buildings/building-89-night.webp",
+    "sha256": "cf438f2f73a7dbd0f6465b12c7785d0cb2f290359f2c84315a0f21969090bc08",
+    "ratio": "16:9",
+    "alt": { "ar": "واجهة مبنى 89 السكني في الرياض خلال المساء", "en": "Building 89 residential exterior in Riyadh at blue hour" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "building-89-day",
+    "category": "building",
+    "path": "assets/buildings/building-89-day.webp",
+    "sha256": "ccb2c5b787afd21be184fbbaa8b7928ec164c042fd19d49952efba8dbd7eb1a0",
+    "ratio": "16:9",
+    "alt": { "ar": "واجهة مبنى 89 السكني الحديث في ضوء النهار", "en": "Building 89 modern residential exterior in daylight" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "nakheel-court",
+    "category": "building",
+    "path": "assets/buildings/nakheel-court.webp",
+    "sha256": "79a7b42a34719f963db2419fff5c1f627bacb444f510b94ef49e8ff160789b7c",
+    "ratio": "16:9",
+    "alt": { "ar": "فناء سكني عائلي متوسط الارتفاع تحيط به أشجار النخيل", "en": "Mid-rise family residential courtyard surrounded by palm trees" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "jeddah-view",
+    "category": "building",
+    "path": "assets/buildings/jeddah-view.webp",
+    "sha256": "a32b277ef344e2139d9bbc3fad805e140ef56e15016f2d8fd34ac270f0592921",
+    "ratio": "16:9",
+    "alt": { "ar": "واجهة مجمع سكني ساحلي في جدة عند غروب الشمس", "en": "Coastal residential exterior in Jeddah at sunset" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "living-room",
+    "category": "apartment",
+    "path": "assets/apartments/living-room.webp",
+    "sha256": "7b1a545dd216c9012617e7fd5d7876463543f3fc2b2e2e458fafc824f584d6ba",
+    "ratio": "4:3",
+    "alt": { "ar": "غرفة معيشة عصرية ومضيئة في شقة سعودية", "en": "Bright contemporary living room in a Saudi apartment" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "kitchen",
+    "category": "apartment",
+    "path": "assets/apartments/kitchen.webp",
+    "sha256": "c969ee157e60d90110bf6e0e5ef1a2b74b25f9172208b5d635aef046a6fa2b9e",
+    "ratio": "4:3",
+    "alt": { "ar": "مطبخ شقة حديث بتفاصيل خشبية وإضاءة دافئة", "en": "Modern apartment kitchen with warm wood finishes" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "bedroom",
+    "category": "apartment",
+    "path": "assets/apartments/bedroom.webp",
+    "sha256": "6c0b25d7ded99a5c9775c286917b34fc719791b8a20181d4b9ef2f98395c373c",
+    "ratio": "4:3",
+    "alt": { "ar": "غرفة نوم رئيسية هادئة بألوان محايدة ناعمة", "en": "Calm primary bedroom with soft neutral finishes" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "balcony",
+    "category": "apartment",
+    "path": "assets/apartments/balcony.webp",
+    "sha256": "149af202886b853302d7fb952cceb326ddb5abe530e4964285920fb43529bf2e",
+    "ratio": "4:3",
+    "alt": { "ar": "شرفة سكنية مظللة تطل على أفق المدينة", "en": "Shaded residential balcony overlooking the city skyline" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "lobby",
+    "category": "amenity",
+    "path": "assets/amenities/lobby.webp",
+    "sha256": "3ccd6bfc181bdc02344cea53ebd33e88d3713613fd44ea67eee1303322c2d08b",
+    "ratio": "4:3",
+    "alt": { "ar": "ردهة استقبال راقية في مبنى سكني حديث", "en": "Premium reception lobby in a modern residential building" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "gym",
+    "category": "amenity",
+    "path": "assets/amenities/gym.webp",
+    "sha256": "00e47c82e661f79113b56580ff447220e674da51ce14bcfa47a7eefe8841fb50",
+    "ratio": "4:3",
+    "alt": { "ar": "صالة رياضية مدمجة ومجهزة لسكان المبنى", "en": "Compact well-equipped gym for building residents" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "meeting-room",
+    "category": "amenity",
+    "path": "assets/amenities/meeting-room.webp",
+    "sha256": "08a5d896ade0aa9ac31b42bc5ca065ca02cbd86c4bfa883d800062ee05c56113",
+    "ratio": "4:3",
+    "alt": { "ar": "غرفة اجتماعات مجتمعية مرتبة داخل المجمع السكني", "en": "Organized community meeting room inside the residence" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "parking",
+    "category": "amenity",
+    "path": "assets/amenities/parking.webp",
+    "sha256": "0251cee918a875272bb24c9f71f902a1b5332ba98767d7f675c29ab1932fe796",
+    "ratio": "4:3",
+    "alt": { "ar": "مواقف سيارات نظيفة وآمنة مخصصة لسكان المبنى", "en": "Clean secure parking area reserved for building residents" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "hvac-technician",
+    "category": "service",
+    "path": "assets/services/hvac-technician.webp",
+    "sha256": "640b8e8af61d3ccea3320b8ba98d439d5d7fdcde28a91b3ca1934c70a59d6786",
+    "ratio": "4:3",
+    "alt": { "ar": "فني تكييف يعمل بأمان على وحدة تكييف منزلية", "en": "HVAC technician safely servicing a residential air conditioner" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "cleaning-team",
+    "category": "service",
+    "path": "assets/services/cleaning-team.webp",
+    "sha256": "2f4a719ba84866990257a016107f24ab90ac6d4286b96e11fe37cc54e7473957",
+    "ratio": "4:3",
+    "alt": { "ar": "فريق تنظيف سكني محترف يستخدم معدات مرتبة", "en": "Professional residential cleaning team with organized equipment" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "elevator-maintenance",
+    "category": "service",
+    "path": "assets/services/elevator-maintenance.webp",
+    "sha256": "6c982ab70f70b0f62cc83f54d52eece8a05de23fbf5b978b3b6afd0a376cfb6a",
+    "ratio": "4:3",
+    "alt": { "ar": "فني يجري فحص سلامة للمصعد باستخدام أدوات متخصصة", "en": "Technician performing an elevator safety inspection with tools" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "mobile-car-care",
+    "category": "service",
+    "path": "assets/services/mobile-car-care.webp",
+    "sha256": "fbca12d4a1fc17bdce50d5e5f9db5282b0abfc06bdf2850347866dd0e3df479e",
+    "ratio": "4:3",
+    "alt": { "ar": "خدمة متنقلة للعناية بالسيارة والإطارات أمام المنزل", "en": "Mobile car wash and tire care service at a residence" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "home-technology",
+    "category": "service",
+    "path": "assets/services/home-technology.webp",
+    "sha256": "ec645d26c99d9378d296051917b0b47f030bda4b1158358118d92735fb26a513",
+    "ratio": "4:3",
+    "alt": { "ar": "فني يثبت قفلًا ذكيًا وكاميرا أمنية منزلية", "en": "Technician installing a smart lock and home security camera" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  },
+  {
+    "id": "delivery-utilities",
+    "category": "service",
+    "path": "assets/services/delivery-utilities.webp",
+    "sha256": "c07d5c683a8f38bbf3152d11de84ef2171f7d4bd045fe13f36f358527499159e",
+    "ratio": "4:3",
+    "alt": { "ar": "توصيل منظم للمياه والبقالة والاحتياجات المنزلية", "en": "Organized delivery of water groceries and household utilities" },
+    "provenance": "ImageGen, 2026-08-03; converted once to WebP quality 82"
+  }
+]
