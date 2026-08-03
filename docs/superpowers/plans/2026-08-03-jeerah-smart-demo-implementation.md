@@ -693,7 +693,7 @@ export interface RepositoryOptions {
 }
 ```
 
-Store one record `{ key: "state", revision, value, updatedAt }` in IndexedDB database version 1. Every dispatch opens one `readwrite` transaction, reads the latest record inside that transaction, reduces it, writes `revision + 1`, explicitly awaits `tx.done`, then broadcasts the committed snapshot. `reset()` uses the same transaction and increments the latest revision; it never returns to zero. On incoming snapshots, replace local memory only when the revision is newer and update `lastSyncAt`. If IndexedDB fails, use the in-memory seed and expose `storageMode: "memory"`.
+Store one record `{ key: "state", revision, value, updatedAt }` in IndexedDB database version 1. Every dispatch opens one `readwrite` transaction, reads the latest record inside that transaction, reduces it, writes `revision + 1`, and explicitly awaits `tx.done`. Restrict the IndexedDB fallback catch to that database/transaction block. After a successful commit, update memory exactly once; listener and channel notifications happen outside the database catch and are isolated so an exception cannot replay the action or change `storageMode`. `reset()` uses the same transaction and increments the latest revision; it never returns to zero. On incoming snapshots, replace local memory only when the revision is newer and update `lastSyncAt`. If IndexedDB itself fails, use the in-memory seed and expose `storageMode: "memory"`.
 
 Also export `createMemoryDemoRepository(initialState?: DemoState, channelName?: string): DemoRepository` for deterministic UI tests.
 
@@ -741,13 +741,15 @@ export function useDemoMeta() {
 }
 ```
 
+`main.tsx` uses `React.StrictMode`. A provider-owned repository must therefore be created inside an effect lifecycle, and every development setup/cleanup replay receives and closes its own instance. Never create an owned repository during render or reuse a closed memoized instance. A supplied repository remains caller-owned and must not be closed by `DemoProvider`.
+
 Mount the provider once around every Jeerah surface so resident and admin use the same repository.
 `DemoProvider` unwraps `RepositorySnapshot`: state and meta go to separate contexts, while its dispatch callback returns `snapshot.state` for ergonomic UI actions.
 
 - [ ] **Step 7: Run repository and scenario tests**
 
 Run: `npm run test:run -- tests/jeerah/repository.test.ts tests/jeerah/scenarios.test.ts`  
-Expected: persistence, reset, fallback, scenario, and cross-instance tests pass.
+Expected: fresh-instance persistence, reset, cross-instance memory sync, self/equal/stale revision filtering, BroadcastChannel → storage → memory selection, close/unsubscribe, notification-failure isolation, Strict Mode provider lifecycle, provider hooks, fallback metadata, and scenario tests pass.
 
 - [ ] **Step 8: Commit**
 
