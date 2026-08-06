@@ -8,7 +8,7 @@ import { calculateCommunityPulse } from "../../domain/communityPulse";
 import type { Activity, Invoice } from "../../domain/models";
 import { JeerahLogo } from "../../design/JeerahLogo";
 import { useI18n } from "../../i18n/I18nProvider";
-import { getBuildingScreen, getResidentScreen } from "../ResidentApp";
+import { getBuildingScreen, getResidentRoute, getResidentScreen } from "../ResidentApp";
 import { ActivityFeed } from "../components/ActivityFeed";
 import { CommunityPulseCard } from "../components/CommunityPulseCard";
 import { getResidentAsset } from "../components/PropertyGallery";
@@ -85,14 +85,14 @@ export function HomePage({ flow }: { flow: FlowControls }) {
                 <Translate aria-hidden="true" weight="duotone" />
                 {t(nextLocale === "ar" ? "language.arabic" : "language.english")}
               </button>
-              <button type="button" className="resident-icon-button" aria-label={t("resident.messages")} onClick={openCommunity}>
+              <button type="button" className="resident-icon-button" aria-label={t("resident.messages")} onClick={() => flow.push(getResidentRoute({ kind: "chats" }))}>
                 <ChatCircleDots aria-hidden="true" weight="duotone" />
               </button>
               <motion.button
                 type="button"
                 className="resident-icon-button"
                 aria-label={t("resident.notifications")}
-                onClick={openCommunity}
+                onClick={() => flow.push(getResidentRoute({ kind: "notifications" }))}
                 animate={reduceMotion ? undefined : { rotate: [0, -7, 7, -4, 4, 0] }}
                 transition={{ type: "spring", stiffness: 360, damping: 17, delay: 0.55 }}
               >
@@ -132,6 +132,7 @@ export function HomePage({ flow }: { flow: FlowControls }) {
           <QuickActions
             onExpenses={openExpenses}
             onServices={openMarketplace}
+            onJoinCode={() => flow.push(getResidentRoute({ kind: "join-code" }))}
             onMarketplace={openMarketplace}
           />
 

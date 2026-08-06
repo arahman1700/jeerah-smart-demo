@@ -1,6 +1,6 @@
 import type {
-  Amenity, AmenityBooking, Announcement, CommunityEvent, DemoState, NeighborDeal, NeighborGift, Poll,
-  RecurringPlan, ServiceOrder, VisitorPass,
+  Amenity, AmenityBooking, Announcement, CommunityEvent, Conversation, DemoState, LocalizedText, NeighborDeal,
+  NeighborGift, Poll, RecurringPlan, ServiceOrder, VisitorPass, WalletTransaction,
 } from "./models";
 
 /**
@@ -67,4 +67,43 @@ export function pollTotals(poll: Poll) {
       percent: total === 0 ? 0 : Math.round((option.voterIds.length / total) * 100),
     })),
   };
+}
+
+export const residentWalletTransactions = (state: DemoState): WalletTransaction[] =>
+  state.walletTransactions
+    .filter((transaction) => transaction.residentId === state.currentResidentId)
+    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
+
+/** Signed sum of the resident's simulated wallet movements. */
+export const residentWalletBalance = (state: DemoState): number =>
+  residentWalletTransactions(state).reduce(
+    (sum, transaction) => sum + (transaction.kind === "spend" ? -transaction.amount : transaction.amount),
+    0,
+  );
+
+export const residentConversations = (state: DemoState): Conversation[] =>
+  state.conversations
+    .filter((conversation) => conversation.residentId === state.currentResidentId)
+    .sort((a, b) => (b.messages.at(-1)?.sentAt ?? "").localeCompare(a.messages.at(-1)?.sentAt ?? "") || a.id.localeCompare(b.id));
+
+export interface ResidentNotification {
+  id: string;
+  title: LocalizedText;
+  description: LocalizedText;
+  occurredAt: string;
+  unread: boolean;
+}
+
+/** Building announcements and activity, newest first, marked against the read cursor. */
+export function residentNotifications(state: DemoState): ResidentNotification[] {
+  const readAt = Date.parse(state.notificationsReadAt);
+  const items: ResidentNotification[] = [
+    ...state.announcements
+      .filter((item) => item.buildingId === state.currentBuildingId)
+      .map((item) => ({ id: `notification-${item.id}`, title: item.title, description: item.body, occurredAt: item.publishedAt, unread: Date.parse(item.publishedAt) > readAt })),
+    ...state.activities
+      .filter((item) => item.buildingId === state.currentBuildingId)
+      .map((item) => ({ id: `notification-${item.id}`, title: item.title, description: item.description, occurredAt: item.occurredAt, unread: Date.parse(item.occurredAt) > readAt })),
+  ];
+  return items.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || a.id.localeCompare(b.id));
 }

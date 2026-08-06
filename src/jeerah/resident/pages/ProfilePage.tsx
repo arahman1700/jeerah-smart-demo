@@ -1,4 +1,4 @@
-import { CaretRight, Crown, Translate, UserCircle } from "@phosphor-icons/react";
+import { CaretRight, Crown, Translate, UserCircle, Wallet } from "@phosphor-icons/react";
 import type { FlowControls } from "../../../mobile/FlowStack";
 import { useDemoState } from "../../data/DemoProvider";
 import { currentResident, isSubscriber, residentOrders, residentPlans } from "../../domain/residentView";
@@ -51,6 +51,11 @@ export function ProfilePage({ flow }: { flow: FlowControls }) {
       ) : <p className="resident-card resident-empty">{t("resident.unavailable")}</p>}
 
       <div className="resident-row-list">
+        <button type="button" className="resident-card resident-row" data-testid="profile-wallet" onClick={() => flow.push(getResidentRoute({ kind: "wallet" }))}>
+          <Wallet aria-hidden="true" weight="duotone" />
+          <span className="resident-row__copy"><strong>{t("profile.wallet_row")}</strong></span>
+          <CaretRight aria-hidden="true" weight="bold" />
+        </button>
         <button type="button" className="resident-card resident-row" onClick={() => flow.push(getResidentRoute({ kind: "offers" }))}>
           <Crown aria-hidden="true" weight="duotone" />
           <span className="resident-row__copy"><strong>{t("market.exclusive_title")}</strong></span>

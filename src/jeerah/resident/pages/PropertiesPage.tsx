@@ -1,9 +1,9 @@
-import { CaretRight, MapPin, UsersThree } from "@phosphor-icons/react";
+import { CaretRight, MapPin, PlusCircle, UsersThree } from "@phosphor-icons/react";
 import type { FlowControls } from "../../../mobile/FlowStack";
 import { MobileScroll } from "../../../mobile/MobileScroll";
 import { useDemoState } from "../../data/DemoProvider";
 import { useI18n } from "../../i18n/I18nProvider";
-import { getBuildingScreen } from "../ResidentApp";
+import { getBuildingScreen, getResidentRoute } from "../ResidentApp";
 import { PropertyImage } from "../components/PropertyGallery";
 
 export function PropertiesPage({ flow }: { flow: FlowControls }) {
@@ -22,6 +22,17 @@ export function PropertiesPage({ flow }: { flow: FlowControls }) {
           <h1>{t("nav.properties")}</h1>
           <p className="resident-page-title__intro">{t("resident.properties_intro")}</p>
         </header>
+
+        <button
+          type="button"
+          className="resident-card resident-row"
+          data-testid="open-create-building"
+          onClick={() => flow.push(getResidentRoute({ kind: "create-building" }))}
+        >
+          <PlusCircle aria-hidden="true" weight="duotone" />
+          <span className="resident-row__copy"><strong>{t("create_building.title")}</strong><small>{t("create_building.intro")}</small></span>
+          <CaretRight aria-hidden="true" weight="bold" />
+        </button>
         {state.buildings.length ? (
           <ul className="resident-property-list">
             {state.buildings.map((building) => {

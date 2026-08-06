@@ -21,7 +21,13 @@ import { InvoicePage } from "./pages/InvoicePage";
 import { MarketplacePage } from "./pages/MarketplacePage";
 import { MemberOffersPage } from "./pages/MemberOffersPage";
 import { OrderTimelinePage } from "./pages/OrderTimelinePage";
+import { ChatConversationPage } from "./pages/ChatConversationPage";
+import { ChatsPage } from "./pages/ChatsPage";
+import { CreateBuildingPage } from "./pages/CreateBuildingPage";
+import { JoinCodePage } from "./pages/JoinCodePage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { OrdersPage } from "./pages/OrdersPage";
+import { WalletPage } from "./pages/WalletPage";
 import { PaymentHistoryPage } from "./pages/PaymentHistoryPage";
 import { PaymentPage } from "./pages/PaymentPage";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -62,7 +68,13 @@ export type ResidentRoute =
   | { kind: "plans" }
   | { kind: "gift" }
   | { kind: "visitor" }
-  | { kind: "amenities" };
+  | { kind: "amenities" }
+  | { kind: "wallet" }
+  | { kind: "chats" }
+  | { kind: "chat"; conversationId: string }
+  | { kind: "notifications" }
+  | { kind: "join-code" }
+  | { kind: "create-building" };
 
 /** Visible height of the resident tab bar. Safe-area clearance is added by CSS. */
 const FOOTER_HEIGHT = 64;
@@ -108,6 +120,7 @@ function routeKey(route: ResidentRoute): string {
     case "compare": return `compare:${route.serviceId}`;
     case "book": return `book:${route.serviceId}:${route.providerId ?? ""}`;
     case "order": return `order:${route.orderId}`;
+    case "chat": return `chat:${route.conversationId}`;
     default: return route.kind;
   }
 }
@@ -115,6 +128,8 @@ function routeKey(route: ResidentRoute): string {
 const marketplaceRoot = () => getResidentScreen("marketplace");
 const ordersRoot = () => getResidentScreen("orders");
 const communityRoot = () => getResidentScreen("community");
+const homeRoot = () => getResidentScreen("home");
+const profileRoot = () => getResidentScreen("profile");
 
 function createRootScreen(id: ResidentRootId): FlowScreen {
   const base = { id, footer, footerHeight: FOOTER_HEIGHT };
@@ -158,6 +173,12 @@ function createScreen(route: ResidentRoute): FlowScreen {
     case "gift": return detail("gift", () => <GiftNeighborPage />, marketplaceRoot);
     case "visitor": return detail("visitor", () => <VisitorPassPage />, communityRoot);
     case "amenities": return detail("amenities", () => <AmenitiesPage />, communityRoot);
+    case "wallet": return detail("wallet", () => <WalletPage />, profileRoot, false);
+    case "chats": return detail("chats", (flow) => <ChatsPage flow={flow} />, homeRoot, false);
+    case "chat": return detail("chat", () => <ChatConversationPage conversationId={route.conversationId} />, () => getResidentRoute({ kind: "chats" }), false);
+    case "notifications": return detail("notifications", () => <NotificationsPage />, homeRoot, false);
+    case "join-code": return detail("join-code", () => <JoinCodePage />, homeRoot, false);
+    case "create-building": return detail("create-building", () => <CreateBuildingPage />, propertiesRoot, false);
   }
 }
 

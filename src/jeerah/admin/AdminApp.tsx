@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from "react-router-dom";
 import { AdminShell } from "./AdminShell";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
+import { ContactMessagesPage } from "./pages/ContactMessagesPage";
 import { AuditLogPage } from "./pages/AuditLogPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ExpensesPage } from "./pages/ExpensesPage";
@@ -11,6 +12,7 @@ import { PaymentsPage } from "./pages/PaymentsPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
 import { ResidentsPage } from "./pages/ResidentsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { SubscriptionsPage } from "./pages/SubscriptionsPage";
 import { UnitsPage } from "./pages/UnitsPage";
 import { VisitorsAmenitiesPage } from "./pages/VisitorsAmenitiesPage";
 
@@ -28,6 +30,8 @@ export function AdminRoutes() {
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/announcements" element={<AnnouncementsPage />} />
+        <Route path="/messages" element={<ContactMessagesPage />} />
+        <Route path="/subscriptions" element={<SubscriptionsPage />} />
         <Route path="/visitors-amenities" element={<VisitorsAmenitiesPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/audit" element={<AuditLogPage />} />

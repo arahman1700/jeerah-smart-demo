@@ -336,6 +336,77 @@ export function reduceDemoState(state: DemoState, action: DemoAction): DemoState
       if (action.attending && event.attendeeIds.length >= event.capacity) return state;
       return { ...state, events: updateById(state.events, action.eventId, (item) => ({ ...item, attendeeIds: action.attending ? [...item.attendeeIds, action.residentId] : item.attendeeIds.filter((id) => id !== action.residentId) })) };
     }
+    case "wallet/topped-up": {
+      const transaction = action.transaction;
+      if (hasId(state.walletTransactions, transaction.id) || !hasId(state.residents, transaction.residentId)) return state;
+      if (transaction.kind !== "top-up" || !positive(transaction.amount) || transaction.amount < 10) return state;
+      if (!isoTime(transaction.occurredAt) || !filled(transaction.reference)) return state;
+      return {
+        ...state,
+        walletTransactions: [...state.walletTransactions, transaction],
+        auditLog: [...state.auditLog, {
+          id: `audit-${transaction.id}`,
+          actorId: transaction.residentId,
+          action: "wallet/topped-up",
+          entityType: "wallet-transaction",
+          entityId: transaction.id,
+          description: { ar: "شحن تجريبي للمحفظة — لم يتم الخصم", en: "Demo wallet top-up — no money was charged" },
+          occurredAt: transaction.occurredAt,
+        }],
+      };
+    }
+    case "chat/message-sent": {
+      const conversation = state.conversations.find((item) => item.id === action.conversationId);
+      if (!conversation || conversation.status !== "active") return state;
+      const { message, reply } = action;
+      if (message.author !== "resident" || !filled(message.body) || !isoTime(message.sentAt)) return state;
+      if (conversation.messages.some((item) => item.id === message.id)) return state;
+      if (reply && (reply.author !== "provider" || !filled(reply.body) || !isoTime(reply.sentAt) || reply.id === message.id || conversation.messages.some((item) => item.id === reply.id))) return state;
+      return {
+        ...state,
+        conversations: updateById(state.conversations, conversation.id, (item) => ({
+          ...item,
+          messages: reply ? [...item.messages, message, reply] : [...item.messages, message],
+          unreadCount: reply ? item.unreadCount + 1 : item.unreadCount,
+        })),
+      };
+    }
+    case "chat/read": {
+      const conversation = state.conversations.find((item) => item.id === action.conversationId);
+      if (!conversation || conversation.unreadCount === 0) return state;
+      return { ...state, conversations: updateById(state.conversations, conversation.id, (item) => ({ ...item, unreadCount: 0 })) };
+    }
+    case "notifications/read": {
+      if (!isoTime(action.readAt) || action.readAt === state.notificationsReadAt) return state;
+      return { ...state, notificationsReadAt: action.readAt };
+    }
+    case "contact-message/read": {
+      const message = state.contactMessages.find((item) => item.id === action.messageId);
+      if (!message || message.read) return state;
+      return { ...state, contactMessages: updateById(state.contactMessages, action.messageId, (item) => ({ ...item, read: true })) };
+    }
+    case "building/created": {
+      const building = action.building;
+      if (!filled(building.id) || hasId(state.buildings, building.id)) return state;
+      if (!filled(building.name?.ar) || !filled(building.name?.en)) return state;
+      if (!filled(building.address?.ar) || !filled(building.address?.en)) return state;
+      if (!filled(building.manager?.ar) || !filled(building.manager?.en)) return state;
+      if (!Array.isArray(building.imageIds) || building.imageIds.length === 0 || !building.imageIds.every(filled)) return state;
+      if (!Array.isArray(building.amenityIds)) return state;
+      return {
+        ...state,
+        buildings: [...state.buildings, building],
+        auditLog: [...state.auditLog, {
+          id: `audit-${building.id}`,
+          actorId: state.currentResidentId,
+          action: "building/created",
+          entityType: "building",
+          entityId: building.id,
+          description: { ar: "تم إنشاء مبنى تجريبي جديد", en: "New demo building created" },
+          occurredAt: state.now,
+        }],
+      };
+    }
     // Reset restores the seed fixtures but keeps the person's language choice.
     case "demo/reset": return { ...createSeedState(), locale: state.locale };
   }

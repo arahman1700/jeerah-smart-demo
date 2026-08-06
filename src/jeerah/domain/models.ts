@@ -112,7 +112,14 @@ export interface ServiceOffering {
   etaMinutes?: number; slaMinutes?: number; durationMinutes?: number; warrantyDays?: number; active: boolean;
 }
 export interface Payment { id: string; invoiceId: string; residentId: string; method: PaymentMethod; status: PaymentStatus; amount: number; occurredAt: string; reference: string; last4?: PaymentMask; }
-export interface DemoState { schemaVersion: 2; locale: Locale; scenario: DemoScenario; now: string; currentResidentId: string; currentBuildingId: string; buildings: Building[]; units: Unit[]; residents: Resident[]; invoices: Invoice[]; payments: Payment[]; serviceFamilies: ServiceFamily[]; serviceOfferings: ServiceOffering[]; providers: ServiceProvider[]; orders: ServiceOrder[]; memberOffers: MemberOffer[]; recurringPlans: RecurringPlan[]; neighborDeals: NeighborDeal[]; neighborRelationships: NeighborRelationship[]; announcements: Announcement[]; polls: Poll[]; events: CommunityEvent[]; visitorPasses: VisitorPass[]; amenities: Amenity[]; amenityBookings: AmenityBooking[]; gifts: NeighborGift[]; activities: Activity[]; auditLog: AuditEntry[]; }
+/** A simulated wallet movement. Top-ups never charge anything real. */
+export interface WalletTransaction { id: string; residentId: string; kind: "top-up" | "spend" | "refund"; amount: number; occurredAt: string; reference: string; note: LocalizedText; }
+export interface ChatMessage { id: string; author: "resident" | "provider"; body: string; sentAt: string; }
+/** A marketplace inquiry thread between the resident and one provider. */
+export interface Conversation { id: string; residentId: string; providerId: string; serviceId?: string; status: "active" | "closed"; unreadCount: number; messages: ChatMessage[]; }
+/** A fictional website contact-form message handled by the admin. */
+export interface ContactMessage { id: string; senderName: string; senderEmail: string; subject: LocalizedText; body: LocalizedText; receivedAt: string; read: boolean; }
+export interface DemoState { schemaVersion: 2; locale: Locale; scenario: DemoScenario; now: string; currentResidentId: string; currentBuildingId: string; buildings: Building[]; units: Unit[]; residents: Resident[]; invoices: Invoice[]; payments: Payment[]; walletTransactions: WalletTransaction[]; conversations: Conversation[]; contactMessages: ContactMessage[]; notificationsReadAt: string; serviceFamilies: ServiceFamily[]; serviceOfferings: ServiceOffering[]; providers: ServiceProvider[]; orders: ServiceOrder[]; memberOffers: MemberOffer[]; recurringPlans: RecurringPlan[]; neighborDeals: NeighborDeal[]; neighborRelationships: NeighborRelationship[]; announcements: Announcement[]; polls: Poll[]; events: CommunityEvent[]; visitorPasses: VisitorPass[]; amenities: Amenity[]; amenityBookings: AmenityBooking[]; gifts: NeighborGift[]; activities: Activity[]; auditLog: AuditEntry[]; }
 
 export type DemoAction =
   | { type: "locale/set"; locale: Locale } | { type: "scenario/set"; scenario: DemoScenario }
@@ -131,7 +138,15 @@ export type DemoAction =
   | { type: "neighbor-deal/joined"; dealId: string; residentId: string } | { type: "neighbor-gift/sent"; gift: NeighborGift }
   | { type: "building/updated"; buildingId: string; patch: Partial<Pick<Building, "name" | "address" | "manager">> } | { type: "unit/updated"; unitId: string; patch: Partial<Pick<Unit, "status" | "label">> } | { type: "resident/updated"; residentId: string; patch: Partial<Pick<Resident, "status" | "role">> }
   | { type: "announcement/published"; announcement: Announcement } | { type: "poll/created"; poll: Poll } | { type: "visitor-pass/created"; pass: VisitorPass } | { type: "amenity-booking/created"; booking: AmenityBooking }
-  | { type: "poll/voted"; pollId: string; optionId: string; residentId: string } | { type: "event/rsvp"; eventId: string; residentId: string; attending: boolean } | { type: "demo/reset" };
+  | { type: "poll/voted"; pollId: string; optionId: string; residentId: string } | { type: "event/rsvp"; eventId: string; residentId: string; attending: boolean }
+  | { type: "wallet/topped-up"; transaction: WalletTransaction }
+  /** Sends one resident message; a demo provider reply may commit atomically with it. */
+  | { type: "chat/message-sent"; conversationId: string; message: ChatMessage; reply?: ChatMessage }
+  | { type: "chat/read"; conversationId: string }
+  | { type: "notifications/read"; readAt: string }
+  | { type: "contact-message/read"; messageId: string }
+  | { type: "building/created"; building: Building }
+  | { type: "demo/reset" };
 
 /** Everything except locale, scenario selection, and reset mutates demo records. */
 export const READ_ONLY_ACTION_TYPES = new Set<DemoAction["type"]>(["locale/set", "scenario/set", "demo/reset"]);

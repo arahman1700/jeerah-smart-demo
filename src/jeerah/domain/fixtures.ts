@@ -1,8 +1,8 @@
 import type {
-  Activity, Amenity, AmenityBooking, Announcement, Building, CommunityEvent, DemoState, Invoice, MemberOffer,
+  Activity, Amenity, AmenityBooking, Announcement, Building, ChatMessage, CommunityEvent, ContactMessage, Conversation, DemoState, Invoice, MemberOffer,
   NeighborDeal, NeighborGift, NeighborRelationship, OrderStatus, OrderTimelineEvent, Payment, Poll, RecurringPlan,
   Resident, RequiredServiceKey, ServiceFamily, ServiceFamilyId, ServiceFulfillment, ServiceOffering, ServiceOrder,
-  ServiceProvider, Unit, VisitorPass,
+  ServiceProvider, Unit, VisitorPass, WalletTransaction,
 } from "./models";
 import { PAYMENT_METHOD_MASK } from "./models";
 
@@ -686,6 +686,45 @@ const activities: Activity[] = Array.from({ length: 12 }, (_, index) => {
   };
 });
 
+const walletTransactions: WalletTransaction[] = [
+  { id: "wallet-1", residentId: CURRENT_RESIDENT_ID, kind: "top-up", amount: 200, occurredAt: "2026-07-28T09:15:00+03:00", reference: "DEMO-WALLET-0200", note: text("شحن تجريبي للمحفظة", "Demo wallet top-up") },
+  { id: "wallet-2", residentId: CURRENT_RESIDENT_ID, kind: "spend", amount: 80, occurredAt: "2026-07-30T17:40:00+03:00", reference: "DEMO-WALLET-SPD1", note: text("خصم تجريبي مقابل غسيل سيارة", "Demo spend on a car wash") },
+];
+
+const conversations: Conversation[] = [
+  {
+    id: "chat-coolair",
+    residentId: CURRENT_RESIDENT_ID,
+    providerId: "provider-coolair",
+    serviceId: "service-hvac-maintenance",
+    status: "active",
+    unreadCount: 1,
+    messages: [
+      { id: "chat-coolair-1", author: "resident", body: "هل تشمل صيانة المكيف تنظيف الفلاتر؟", sentAt: "2026-08-02T10:05:00+03:00" },
+      { id: "chat-coolair-2", author: "provider", body: "أهلًا سيف الدين، نعم تشمل التنظيف والفحص الكامل — رد تجريبي.", sentAt: "2026-08-02T10:12:00+03:00" },
+      { id: "chat-coolair-3", author: "provider", body: "يمكننا الحضور الخميس صباحًا إن ناسبك — رد تجريبي.", sentAt: "2026-08-02T10:14:00+03:00" },
+    ],
+  },
+  {
+    id: "chat-lamsa",
+    residentId: CURRENT_RESIDENT_ID,
+    providerId: "provider-lamsa-clean",
+    serviceId: "service-home-cleaning",
+    status: "active",
+    unreadCount: 0,
+    messages: [
+      { id: "chat-lamsa-1", author: "resident", body: "كم تستغرق جلسة تنظيف شقة من غرفتين؟", sentAt: "2026-07-29T13:20:00+03:00" },
+      { id: "chat-lamsa-2", author: "provider", body: "عادة ثلاث ساعات مع فريق من اثنين — رد تجريبي.", sentAt: "2026-07-29T13:31:00+03:00" },
+    ],
+  },
+];
+
+const contactMessages: ContactMessage[] = [
+  { id: "contact-1", senderName: "نوف الحربي", senderEmail: "nouf@example.demo", subject: text("استفسار عن الاشتراك السنوي", "Annual subscription inquiry"), body: text("أرغب بمعرفة مزايا الاشتراك السنوي للمبنى.", "I would like to know the annual building subscription benefits."), receivedAt: "2026-08-02T09:10:00+03:00", read: false },
+  { id: "contact-2", senderName: "خالد المطيري", senderEmail: "khaled@example.demo", subject: text("انضمام كمزوّد خدمة", "Joining as a service provider"), body: text("شركتنا مختصة بصيانة المصاعد ونود الانضمام للمنصة.", "Our company specializes in elevator maintenance and wants to join."), receivedAt: "2026-08-01T15:45:00+03:00", read: false },
+  { id: "contact-3", senderName: "سارة القحطاني", senderEmail: "sara@example.demo", subject: text("شكر على الخدمة", "Thanks for the service"), body: text("تجربة الاستخدام ممتازة، شكرًا لكم.", "The experience has been excellent, thank you."), receivedAt: "2026-07-30T11:00:00+03:00", read: true },
+];
+
 export function createSeedState(now: Date = new Date(DATE)): DemoState {
-  return structuredClone({ schemaVersion: 2, locale: "ar", scenario: "normal", now: now.toISOString(), currentResidentId: CURRENT_RESIDENT_ID, currentBuildingId: CURRENT_BUILDING_ID, buildings, units, residents, invoices, payments, serviceFamilies, serviceOfferings, providers, orders, memberOffers, recurringPlans, neighborDeals, neighborRelationships, announcements, polls, events, visitorPasses, amenities, amenityBookings, gifts, activities, auditLog: [] } satisfies DemoState);
+  return structuredClone({ schemaVersion: 2, locale: "ar", scenario: "normal", now: now.toISOString(), currentResidentId: CURRENT_RESIDENT_ID, currentBuildingId: CURRENT_BUILDING_ID, buildings, units, residents, invoices, payments, walletTransactions, conversations, contactMessages, notificationsReadAt: "2026-08-01T00:00:00+03:00", serviceFamilies, serviceOfferings, providers, orders, memberOffers, recurringPlans, neighborDeals, neighborRelationships, announcements, polls, events, visitorPasses, amenities, amenityBookings, gifts, activities, auditLog: [] } satisfies DemoState);
 }
