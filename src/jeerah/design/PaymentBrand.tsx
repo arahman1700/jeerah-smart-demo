@@ -1,8 +1,8 @@
-import { siApplepay, siVisa } from "simple-icons/icons";
+import { siApplepay, siMastercard, siVisa } from "simple-icons/icons";
 import { assetUrl } from "../assets/url";
 import type { PaymentMethod } from "../domain/models";
 
-const vectorBrands = { "apple-pay": siApplepay, visa: siVisa } as const;
+const vectorBrands = { "apple-pay": siApplepay, visa: siVisa, mastercard: siMastercard } as const;
 
 /**
  * Official payment artwork only. Pass `decorative` where adjacent visible text

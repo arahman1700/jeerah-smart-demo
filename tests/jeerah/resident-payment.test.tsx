@@ -60,10 +60,11 @@ describe("resident payment journey", () => {
 
     const methods = screen.getByTestId("payment-step-method");
     expect(methods.tagName).toBe("FIELDSET");
-    expect(within(methods).getAllByRole("radio")).toHaveLength(3);
+    expect(within(methods).getAllByRole("radio")).toHaveLength(4);
     expect(within(methods).getByRole("radio", { name: /^mada/ })).toBeInTheDocument();
     expect(within(methods).getByRole("radio", { name: /^Apple Pay/ })).toBeInTheDocument();
     expect(within(methods).getByRole("radio", { name: /^Visa/ })).toBeInTheDocument();
+    expect(within(methods).getByRole("radio", { name: /^Mastercard/ })).toBeInTheDocument();
 
     const verify = await reachVerify("mada");
     expect(within(verify).getByTestId("payment-mask-value")).toHaveTextContent("•••• 4455");
@@ -94,6 +95,7 @@ describe("resident payment journey", () => {
   it.each([
     ["apple-pay", "Apple Pay", "Confirm this in-product demo step. This is not an Apple Pay sheet.", undefined],
     ["visa", "Visa", "Confirm this labeled demo 3-D Secure step. No bank is contacted.", "•••• 4242"],
+    ["mastercard", "Mastercard", "Confirm this labeled demo 3-D Secure step. No bank is contacted.", "•••• 5105"],
   ] as const)("confirms the %s demo without an OS imitation or sensitive fields", async (method, brand, instruction, mask) => {
     await renderPayment({ locale: "en" });
 

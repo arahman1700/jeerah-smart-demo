@@ -1,14 +1,14 @@
 export type Locale = "ar" | "en";
 export type DemoScenario = "normal" | "empty" | "offline" | "overdue" | "declined" | "urgent-maintenance";
 export type InvoiceStatus = "due" | "paid" | "overdue" | "upcoming";
-export const PAYMENT_METHODS = ["apple-pay", "mada", "visa"] as const;
+export const PAYMENT_METHODS = ["apple-pay", "mada", "visa", "mastercard"] as const;
 export const PAYMENT_STATUSES = ["paid", "pending", "declined", "cancelled", "timed-out", "refunded"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
-export type PaymentMask = "4455" | "4242";
+export type PaymentMask = "4455" | "4242" | "5105";
 /** The demo only ever shows these masks, and Apple Pay never exposes one. */
 export const PAYMENT_METHOD_MASK: Record<PaymentMethod, PaymentMask | undefined> = {
-  "apple-pay": undefined, mada: "4455", visa: "4242",
+  "apple-pay": undefined, mada: "4455", visa: "4242", mastercard: "5105",
 };
 export type LocalizedText = { ar: string; en: string };
 export type ServiceFamilyId =

@@ -55,11 +55,13 @@ describe("payment simulator", () => {
     const applePay = await simulatePayment({ ...attempt, method: "apple-pay" }, deterministic);
     const mada = await simulatePayment({ ...attempt, method: "mada" }, deterministic);
     const visa = await simulatePayment({ ...attempt, method: "visa" }, deterministic);
+    const mastercard = await simulatePayment({ ...attempt, method: "mastercard" }, deterministic);
 
     expect(Object.hasOwn(applePay, "last4")).toBe(false);
     expect(mada.last4).toBe("4455");
     expect(visa.last4).toBe("4242");
-    expect(PAYMENT_METHOD_MASK).toEqual({ "apple-pay": undefined, mada: "4455", visa: "4242" });
+    expect(mastercard.last4).toBe("5105");
+    expect(PAYMENT_METHOD_MASK).toEqual({ "apple-pay": undefined, mada: "4455", visa: "4242", mastercard: "5105" });
   });
 
   it("runtime-validates identifiers, method, amount, and delay", async () => {

@@ -804,6 +804,7 @@ const en = {
   "payment.apple_pay": "Apple Pay",
   "payment.mada": "mada",
   "payment.visa": "Visa",
+  "payment.mastercard": "Mastercard",
   "payment.demo_otp": "Demo OTP",
   "payment.demo_3ds": "Demo 3-D Secure confirmation",
   "payment.confirm_payment": "Confirm payment",
@@ -1053,6 +1054,7 @@ const ar: Record<keyof typeof en, string> = {
   "payment.apple_pay": "Apple Pay",
   "payment.mada": "مدى",
   "payment.visa": "Visa",
+  "payment.mastercard": "ماستركارد",
   "payment.demo_otp": "رمز التحقق التجريبي",
   "payment.demo_3ds": "تأكيد 3-D Secure تجريبي",
   "payment.confirm_payment": "تأكيد الدفع",
@@ -1240,7 +1242,7 @@ export const residentRoleMessageKey: Record<Resident["role"], MessageKey> = { ow
 export const providerStatusMessageKey: Record<ServiceProvider["status"], MessageKey> = { "verified-demo": "provider.verified_demo", new: "provider.new", paused: "provider.paused", review: "provider.review" };
 export const invoiceStatusMessageKey: Record<InvoiceStatus, MessageKey> = { due: "status.due", paid: "status.paid", overdue: "status.overdue", upcoming: "status.upcoming" };
 export const paymentStatusMessageKey: Record<PaymentStatus, MessageKey> = { paid: "status.paid", pending: "status.pending", declined: "status.declined", cancelled: "status.cancelled", "timed-out": "status.timed_out", refunded: "status.refunded" };
-export const paymentMethodMessageKey: Record<PaymentMethod, MessageKey> = { "apple-pay": "payment.apple_pay", mada: "payment.mada", visa: "payment.visa" };
+export const paymentMethodMessageKey: Record<PaymentMethod, MessageKey> = { "apple-pay": "payment.apple_pay", mada: "payment.mada", visa: "payment.visa", mastercard: "payment.mastercard" };
 export const paymentOutcomeMessageKey: Record<PaymentStatus, MessageKey> = { paid: "payment.outcome_paid", pending: "payment.outcome_pending", declined: "payment.outcome_declined", cancelled: "payment.outcome_cancelled", "timed-out": "payment.outcome_timed_out", refunded: "payment.outcome_refunded" };
 export const orderStatusMessageKey: Record<OrderStatus, MessageKey> = { "awaiting-quote": "status.awaiting_quote", "quote-ready": "status.quote_ready", scheduled: "status.scheduled", confirmed: "status.confirmed", assigned: "status.assigned", "en-route": "status.en_route", "in-progress": "status.in_progress", "awaiting-resident-approval": "status.awaiting_resident_approval", completed: "status.completed", cancelled: "status.cancelled", refunded: "status.refunded" };
 export const quoteStatusMessageKey = { awaiting: "quote.awaiting", ready: "quote.ready", approved: "quote.approved", rejected: "quote.rejected" } as const;

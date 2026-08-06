@@ -27,6 +27,7 @@ const methodInstructionKey: Record<PaymentMethod, MessageKey> = {
   "apple-pay": "payment.apple_pay_instruction",
   mada: "payment.otp_instruction",
   visa: "payment.3ds_instruction",
+  mastercard: "payment.3ds_instruction",
 };
 
 const maskLabel = (last4: string) => `•••• ${last4}`;
