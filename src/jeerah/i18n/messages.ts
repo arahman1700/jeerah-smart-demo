@@ -718,6 +718,26 @@ const task14Ar: Record<keyof typeof task14En, string> = {
   "profile.sign_out": "تسجيل الخروج",
 };
 
+const task15En = {
+  "admin.quick_nav": "Quick navigation",
+  "admin.quick_nav_residents": "Manage residents",
+  "admin.quick_nav_properties": "View all buildings",
+  "admin.quick_nav_marketplace": "Manage services & providers",
+  "admin.quick_nav_audit": "System activity",
+  "admin.role_platform": "Platform admin",
+  "launcher.payment_badges": "Simulated payment methods — no real charges",
+} as const;
+
+const task15Ar: Record<keyof typeof task15En, string> = {
+  "admin.quick_nav": "التنقل السريع",
+  "admin.quick_nav_residents": "إدارة السكان",
+  "admin.quick_nav_properties": "عرض جميع المباني",
+  "admin.quick_nav_marketplace": "إدارة الخدمات والمزوّدين",
+  "admin.quick_nav_audit": "نشاط النظام",
+  "admin.role_platform": "مدير المنصة",
+  "launcher.payment_badges": "طرق دفع تجريبية — لا رسوم حقيقية",
+};
+
 const en = {
   "app.name": "Jeerah Smart",
   "app.demo": "Jeerah Smart demo",
@@ -966,6 +986,7 @@ const en = {
   ...task11En,
   ...task13En,
   ...task14En,
+  ...task15En,
 } as const;
 
 const ar: Record<keyof typeof en, string> = {
@@ -1216,6 +1237,7 @@ const ar: Record<keyof typeof en, string> = {
   ...task11Ar,
   ...task13Ar,
   ...task14Ar,
+  ...task15Ar,
 };
 
 export const messages = { en, ar } as const;
@@ -1280,4 +1302,5 @@ export const requiredPlanMessageKeys = [
   ...(Object.keys(task11En) as Array<keyof typeof task11En>),
   ...(Object.keys(task13En) as Array<keyof typeof task13En>),
   ...(Object.keys(task14En) as Array<keyof typeof task14En>),
+  ...(Object.keys(task15En) as Array<keyof typeof task15En>),
 ] as const satisfies readonly MessageKey[];

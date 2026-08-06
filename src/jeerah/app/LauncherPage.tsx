@@ -1,6 +1,7 @@
 import { Buildings, DeviceMobileCamera, DownloadSimple, Monitor, Moon, Sun } from "@phosphor-icons/react";
 import { useI18n } from "../i18n/I18nProvider";
 import { JeerahLogo } from "../design/JeerahLogo";
+import { PaymentBrand } from "../design/PaymentBrand";
 import { useInstallPrompt } from "../pwa/useInstallPrompt";
 import type { JeerahTheme } from "./theme";
 
@@ -104,6 +105,13 @@ export function LauncherPage({ theme, onToggleTheme }: { theme: JeerahTheme; onT
       </main>
 
       <footer className="jeerah-launcher__footer">
+        <div className="jeerah-launcher__badges" role="group" aria-label={t("launcher.payment_badges")}>
+          <PaymentBrand brand="apple-pay" />
+          <PaymentBrand brand="mada" />
+          <PaymentBrand brand="visa" />
+          <PaymentBrand brand="mastercard" />
+        </div>
+        <p>{t("launcher.payment_badges")}</p>
         <p>{t("launcher.demo_note")}</p>
       </footer>
     </div>

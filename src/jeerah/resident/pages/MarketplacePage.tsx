@@ -192,6 +192,7 @@ export function MarketplacePage({ flow }: { flow: FlowControls }) {
                   type="button"
                   key={family.id}
                   className="resident-card resident-family-tile"
+                  data-family={family.id}
                   data-testid={`family-tile-${family.id}`}
                   onClick={() => flow.push(getResidentRoute({ kind: "family", familyId: family.id }))}
                   initial={reduceMotion ? false : { opacity: 0, y: 10 }}

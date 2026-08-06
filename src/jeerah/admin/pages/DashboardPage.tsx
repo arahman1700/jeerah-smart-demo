@@ -1,4 +1,4 @@
-import { Buildings, ChartLineUp, Door, HeartStraight, Receipt, Wrench } from "@phosphor-icons/react";
+import { Buildings, ChartLineUp, Door, HeartStraight, Receipt, Scroll, Storefront, UsersThree, Wrench } from "@phosphor-icons/react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Link } from "react-router-dom";
 import { useDemoState } from "../../data/DemoProvider";
@@ -32,18 +32,19 @@ export function DashboardPage() {
     <section className="admin-page">
       <h1>{t("nav.dashboard")}</h1>
       <div className="admin-kpis">
-        <KpiCard icon={Buildings} label={t("admin.kpi_properties")} value={selectPropertyCount(state)} testId="kpi-properties" />
+        <KpiCard icon={Buildings} label={t("admin.kpi_properties")} value={selectPropertyCount(state)} testId="kpi-properties" tone="indigo" />
         <KpiCard
           icon={Door}
           label={t("admin.kpi_units")}
           value={`${units.occupied}/${units.total}`}
           detail={t("admin.kpi_units_detail", { vacant: units.vacant, maintenance: units.maintenance })}
           testId="kpi-units"
+          tone="teal"
         />
-        <KpiCard icon={ChartLineUp} label={t("analytics.collected")} value={formatSar(selectTotalCollected(state), locale)} testId="kpi-collected" />
-        <KpiCard icon={Receipt} label={t("analytics.outstanding")} value={formatSar(selectOutstandingBalance(state), locale)} testId="kpi-outstanding" />
-        <KpiCard icon={Wrench} label={t("analytics.open_orders")} value={selectOpenOrderCount(state)} testId="kpi-open-orders" />
-        <KpiCard icon={HeartStraight} label={t("admin.kpi_pulse")} value={`${selectAveragePulse(state)}/100`} testId="kpi-pulse" />
+        <KpiCard icon={ChartLineUp} label={t("analytics.collected")} value={formatSar(selectTotalCollected(state), locale)} testId="kpi-collected" tone="green" />
+        <KpiCard icon={Receipt} label={t("analytics.outstanding")} value={formatSar(selectOutstandingBalance(state), locale)} testId="kpi-outstanding" tone="amber" />
+        <KpiCard icon={Wrench} label={t("analytics.open_orders")} value={selectOpenOrderCount(state)} testId="kpi-open-orders" tone="purple" />
+        <KpiCard icon={HeartStraight} label={t("admin.kpi_pulse")} value={`${selectAveragePulse(state)}/100`} testId="kpi-pulse" tone="rose" />
       </div>
 
       <div className="admin-columns">
@@ -122,6 +123,28 @@ export function DashboardPage() {
           )}
         </section>
       </div>
+
+      <section className="admin-card" role="region" aria-label={t("admin.quick_nav")}>
+        <h2>{t("admin.quick_nav")}</h2>
+        <div className="admin-quick-nav">
+          <Link className="admin-quick-nav__item" to="/residents">
+            <span className="admin-kpi__icon" data-tone="indigo" aria-hidden="true"><UsersThree weight="duotone" /></span>
+            <span><strong>{t("nav.residents")}</strong><small>{t("admin.quick_nav_residents")}</small></span>
+          </Link>
+          <Link className="admin-quick-nav__item" to="/properties">
+            <span className="admin-kpi__icon" data-tone="teal" aria-hidden="true"><Buildings weight="duotone" /></span>
+            <span><strong>{t("nav.properties")}</strong><small>{t("admin.quick_nav_properties")}</small></span>
+          </Link>
+          <Link className="admin-quick-nav__item" to="/marketplace">
+            <span className="admin-kpi__icon" data-tone="green" aria-hidden="true"><Storefront weight="duotone" /></span>
+            <span><strong>{t("nav.marketplace")}</strong><small>{t("admin.quick_nav_marketplace")}</small></span>
+          </Link>
+          <Link className="admin-quick-nav__item" to="/audit">
+            <span className="admin-kpi__icon" data-tone="purple" aria-hidden="true"><Scroll weight="duotone" /></span>
+            <span><strong>{t("nav.audit")}</strong><small>{t("admin.quick_nav_audit")}</small></span>
+          </Link>
+        </div>
+      </section>
     </section>
   );
 }

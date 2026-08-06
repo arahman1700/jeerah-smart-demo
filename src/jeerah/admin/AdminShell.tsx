@@ -187,6 +187,25 @@ export function AdminShell({ children, extraNav }: PropsWithChildren<{ extraNav?
               >
                 {locale === "ar" ? "English" : "العربية"}
               </button>
+              <div className="admin-sidebar__user">
+                <span className="admin-sidebar__avatar" aria-hidden="true">A</span>
+                <span className="admin-sidebar__user-copy">
+                  <strong>Admin</strong>
+                  <small>{t("admin.role_platform")}</small>
+                </span>
+              </div>
+              <button
+                type="button"
+                className="admin-button admin-button--ghost"
+                data-testid="admin-sign-out"
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.search = "";
+                  window.location.assign(url.toString());
+                }}
+              >
+                {t("profile.sign_out")}
+              </button>
               <p className="admin-sidebar__note">{t("label.demo_only")}</p>
             </div>
           </aside>

@@ -2857,3 +2857,88 @@ body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon { backgrou
 body[data-jeerah-theme="dark"] .admin-dialog, body[data-jeerah-theme="dark"] .admin-drawer { color: var(--js-glow-white); }
 body[data-jeerah-theme="dark"] #jeerah-admin-surface { background: #161a30; }
 body[data-jeerah-theme="dark"] .admin-table thead th { color: var(--js-muted); }
+
+/* === Tinted icon chips (reference-style colored icons, both themes) === */
+.resident-tint-icon, .resident-family-tile__glyph {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 14px;
+  font-size: 22px;
+}
+.resident-tint-icon[data-tint="amber"] { background: rgb(240 180 95 / 18%); color: #f0b45f; }
+.resident-tint-icon[data-tint="blue"] { background: rgb(103 118 191 / 20%); color: #97a4e8; }
+.resident-tint-icon[data-tint="green"] { background: rgb(46 178 143 / 18%); color: #2eb28f; }
+.resident-tint-icon[data-tint="purple"] { background: rgb(158 122 214 / 18%); color: #b79aec; }
+body[data-jeerah-theme="light"] .resident-tint-icon[data-tint="amber"] { background: rgb(168 90 0 / 12%); color: #a85a00; }
+body[data-jeerah-theme="light"] .resident-tint-icon[data-tint="blue"] { background: rgb(76 85 140 / 12%); color: #4c558c; }
+body[data-jeerah-theme="light"] .resident-tint-icon[data-tint="green"] { background: rgb(8 112 91 / 12%); color: #08705b; }
+body[data-jeerah-theme="light"] .resident-tint-icon[data-tint="purple"] { background: rgb(107 70 168 / 12%); color: #6b46a8; }
+
+/* Eight family tints — dark theme first, light overrides beneath. */
+.resident-family-tile[data-family="care-cleaning"] .resident-family-tile__glyph { background: rgb(46 178 143 / 18%); color: #2eb28f; }
+.resident-family-tile[data-family="home-maintenance"] .resident-family-tile__glyph { background: rgb(240 180 95 / 18%); color: #f0b45f; }
+.resident-family-tile[data-family="building-tech-safety"] .resident-family-tile__glyph { background: rgb(103 118 191 / 22%); color: #97a4e8; }
+.resident-family-tile[data-family="water-utilities"] .resident-family-tile__glyph { background: rgb(80 170 215 / 18%); color: #6cc2e8; }
+.resident-family-tile[data-family="automotive-mobility"] .resident-family-tile__glyph { background: rgb(224 122 122 / 18%); color: #e89a9a; }
+.resident-family-tile[data-family="daily-needs"] .resident-family-tile__glyph { background: rgb(214 160 96 / 18%); color: #e0b380; }
+.resident-family-tile[data-family="home-fitout-moving"] .resident-family-tile__glyph { background: rgb(158 122 214 / 18%); color: #b79aec; }
+.resident-family-tile[data-family="community-membership"] .resident-family-tile__glyph { background: rgb(96 200 180 / 18%); color: #7fd8c4; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="care-cleaning"] .resident-family-tile__glyph { background: rgb(8 112 91 / 12%); color: #08705b; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="home-maintenance"] .resident-family-tile__glyph { background: rgb(168 90 0 / 12%); color: #a85a00; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="building-tech-safety"] .resident-family-tile__glyph { background: rgb(76 85 140 / 12%); color: #4c558c; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="water-utilities"] .resident-family-tile__glyph { background: rgb(21 116 163 / 12%); color: #1574a3; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="automotive-mobility"] .resident-family-tile__glyph { background: rgb(180 35 54 / 10%); color: #b42336; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="daily-needs"] .resident-family-tile__glyph { background: rgb(158 106 34 / 12%); color: #9e6a22; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="home-fitout-moving"] .resident-family-tile__glyph { background: rgb(107 70 168 / 12%); color: #6b46a8; }
+body[data-jeerah-theme="light"] .resident-family-tile[data-family="community-membership"] .resident-family-tile__glyph { background: rgb(10 122 106 / 12%); color: #0a7a6a; }
+
+/* === Toned admin KPI icons + quick navigation + sidebar user card === */
+.admin-kpi__icon[data-tone="indigo"] { background: rgb(76 85 140 / 14%); color: #4c558c; }
+.admin-kpi__icon[data-tone="teal"] { background: rgb(13 130 148 / 12%); color: #0d8294; }
+.admin-kpi__icon[data-tone="green"] { background: rgb(8 112 91 / 12%); color: #08705b; }
+.admin-kpi__icon[data-tone="amber"] { background: rgb(168 90 0 / 12%); color: #a85a00; }
+.admin-kpi__icon[data-tone="purple"] { background: rgb(107 70 168 / 12%); color: #6b46a8; }
+.admin-kpi__icon[data-tone="rose"] { background: rgb(180 35 54 / 10%); color: #b42336; }
+body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon[data-tone="indigo"] { background: rgb(151 164 232 / 16%); color: #97a4e8; }
+body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon[data-tone="teal"] { background: rgb(108 194 232 / 14%); color: #6cc2e8; }
+body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon[data-tone="green"] { background: rgb(46 178 143 / 16%); color: #2eb28f; }
+body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon[data-tone="amber"] { background: rgb(240 180 95 / 16%); color: #f0b45f; }
+body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon[data-tone="purple"] { background: rgb(183 154 236 / 16%); color: #b79aec; }
+body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon[data-tone="rose"] { background: rgb(232 154 154 / 14%); color: #e89a9a; }
+
+.admin-quick-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.admin-quick-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--js-border);
+  border-radius: var(--js-radius-md);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--js-motion-fast), transform var(--js-motion-fast);
+}
+.admin-quick-nav__item:hover { border-color: var(--js-steel-slate); transform: translateY(-2px); }
+.admin-quick-nav__item:focus-visible { outline: 2px solid var(--js-steel-slate); outline-offset: 2px; }
+.admin-quick-nav__item > span:last-child { display: grid; gap: 2px; }
+.admin-quick-nav__item small { color: var(--js-muted); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .admin-quick-nav__item, .admin-quick-nav__item:hover { transition: none; transform: none; } }
+
+.admin-sidebar__user { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-top: 1px solid rgb(255 255 255 / 10%); }
+.admin-sidebar__avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 38px;
+  block-size: 38px;
+  border-radius: 50%;
+  background: var(--js-steel-slate);
+  color: var(--js-glow-white);
+  font-weight: 700;
+}
+.admin-sidebar__user-copy { display: grid; }
+.admin-sidebar__user-copy small { opacity: 0.65; font-size: 11px; }
+
+.jeerah-launcher__badges { display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 6px; opacity: 0.85; }
+.jeerah-launcher__badges svg, .jeerah-launcher__badges img { block-size: 22px; inline-size: auto; }
