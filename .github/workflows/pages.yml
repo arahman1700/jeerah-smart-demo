@@ -24,10 +24,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: node scripts/verify-assets.mjs
-      - run: npm run check:runtime
-      - run: npm run test:run
-      - run: npm run build:pages
+      - run: npm run verify:release
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/client

@@ -153,6 +153,14 @@ export function renderAdmin(options: AdminRenderOptions = {}) {
   return { ...result, user, state, repository, channelName, cleanup: dispose };
 }
 
+/**
+ * Mounts one complete surface for global accessibility sweeps. One surface at
+ * a time keeps roles like `application` and `navigation` unique per render.
+ */
+export function renderCompleteDemo({ locale = "en", surface = "resident" }: { locale?: Locale; surface?: "resident" | "admin" } = {}) {
+  return surface === "admin" ? renderAdmin({ locale }) : renderResident({ locale });
+}
+
 type PaymentRenderOptions = Omit<ResidentRenderOptions, "screenId" | "simulation"> & {
   forcedOutcome?: SimulatedPaymentOutcome;
   invoiceId?: string;

@@ -181,6 +181,10 @@ export function PaymentPage({ invoiceId, flow }: { invoiceId: string; flow: Flow
 
       {alreadyPaid ? <p className="resident-card resident-empty">{t("payment.already_paid")}</p> : null}
 
+      <p className="resident-visually-hidden" role="status" aria-live="polite">
+        {t(step === "method" ? "payment.select_method" : step === "review" ? "payment.review" : step === "verify" ? "payment.verify" : step === "processing" ? "payment.processing" : "payment.result")}
+      </p>
+
       {!alreadyPaid && step === "method" ? (
         <>
           <fieldset className="resident-card resident-methods" data-testid="payment-step-method">
