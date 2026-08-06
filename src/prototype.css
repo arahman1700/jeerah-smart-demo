@@ -50,6 +50,16 @@ body[data-jeerah-surface="admin"] {
   background: var(--js-surface);
 }
 
+#jeerah-admin-surface {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  min-width: 320px;
+  min-height: 100dvh;
+  overflow: auto;
+  background: var(--js-glow-white);
+}
+
 #jeerah-resident-surface {
   position: fixed;
   z-index: 200;
