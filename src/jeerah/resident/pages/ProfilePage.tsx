@@ -1,4 +1,6 @@
-import { CaretRight, Crown, Translate, UserCircle, Wallet } from "@phosphor-icons/react";
+import { CaretRight, Crown, Moon, SignOut, Sun, Translate, UserCircle, Wallet } from "@phosphor-icons/react";
+import { useJeerahTheme } from "../../app/theme";
+import { DEMO_SESSION_KEY } from "../../app/LoginPage";
 import type { FlowControls } from "../../../mobile/FlowStack";
 import { useDemoState } from "../../data/DemoProvider";
 import { currentResident, isSubscriber, residentOrders, residentPlans } from "../../domain/residentView";
@@ -16,6 +18,8 @@ export function ProfilePage({ flow }: { flow: FlowControls }) {
   const building = state.buildings.find((item) => item.id === state.currentBuildingId);
   const subscriber = isSubscriber(state);
   const nextLocale = locale === "ar" ? "en" : "ar";
+  const { resolve, toggle } = useJeerahTheme();
+  const residentTheme = resolve("dark");
 
   return (
     <ResidentPage screen="profile" footerClearance>
@@ -71,6 +75,30 @@ export function ProfilePage({ flow }: { flow: FlowControls }) {
             <strong>{t("profile.language")}</strong>
             <small>{t(nextLocale === "ar" ? "language.switch_to_arabic" : "language.switch_to_english")}</small>
           </span>
+          <CaretRight aria-hidden="true" weight="bold" />
+        </button>
+        <button type="button" className="resident-card resident-row" data-testid="profile-theme-toggle" onClick={() => toggle("dark")}>
+          {residentTheme === "dark" ? <Sun aria-hidden="true" weight="duotone" /> : <Moon aria-hidden="true" weight="duotone" />}
+          <span className="resident-row__copy"><strong>{t(residentTheme === "dark" ? "theme.light" : "theme.dark")}</strong></span>
+          <CaretRight aria-hidden="true" weight="bold" />
+        </button>
+        <button
+          type="button"
+          className="resident-card resident-row"
+          data-testid="profile-sign-out"
+          onClick={() => {
+            try {
+              localStorage.removeItem(DEMO_SESSION_KEY);
+            } catch {
+              // best effort
+            }
+            const url = new URL(window.location.href);
+            url.search = "";
+            window.location.assign(url.toString());
+          }}
+        >
+          <SignOut aria-hidden="true" weight="duotone" />
+          <span className="resident-row__copy"><strong>{t("profile.sign_out")}</strong></span>
           <CaretRight aria-hidden="true" weight="bold" />
         </button>
         <button type="button" className="resident-card resident-row" onClick={() => flow.replace(getResidentRoute({ kind: "root", id: "install" }))}>

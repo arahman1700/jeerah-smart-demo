@@ -135,6 +135,7 @@ describe("resident home and property journey", () => {
     const directRepository = createMemoryDemoRepository({ ...createSeedState(), locale: "en" }, "resident-direct");
     prototypeRepositories.add(directRepository);
     window.history.replaceState({}, "", "/?surface=app");
+    localStorage.setItem("jeerah-demo-session", "active");
     render(<MobileRuntime><JeerahPrototype repository={directRepository} /></MobileRuntime>);
 
     expect(await screen.findByRole("heading", { name: "Saifeldeen" })).toBeInTheDocument();

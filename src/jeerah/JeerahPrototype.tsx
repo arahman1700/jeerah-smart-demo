@@ -1,6 +1,9 @@
 import { useEffect, useState, type PropsWithChildren } from "react";
 import { getRouteMode, type SurfaceMode } from "./app/routeMode";
+import { LauncherPage } from "./app/LauncherPage";
+import { LoginPage, hasDemoSession } from "./app/LoginPage";
 import { SurfacePortal } from "./app/SurfacePortal";
+import { ThemeProvider, useJeerahTheme } from "./app/theme";
 import { AdminApp } from "./admin/AdminApp";
 import { DemoProvider, type DemoProviderProps } from "./data/DemoProvider";
 import { I18nProvider, useI18n } from "./i18n/I18nProvider";
@@ -29,14 +32,29 @@ function useSurfaceMode() {
 
 function JeerahShell({ mode, children }: PropsWithChildren<{ mode: SurfaceMode }>) {
   const { dir, locale, t } = useI18n();
+  const { resolve, toggle } = useJeerahTheme();
+  const [signedIn, setSignedIn] = useState(hasDemoSession);
 
-  return (
-    <main className="jeerah-root" dir={dir} lang={locale} data-surface={mode}>
-      {children ?? (mode === "admin" ? (
+  let surface = children;
+  if (!surface) {
+    if (mode === "launcher") {
+      surface = <LauncherPage theme={resolve("dark")} onToggleTheme={() => toggle("dark")} />;
+    } else if (mode === "admin") {
+      surface = (
         <section role="application" aria-label={t("app.demo")} className="jeerah-admin-surface">
           <AdminApp />
         </section>
-      ) : <ResidentApp />)}
+      );
+    } else if (mode === "resident" && !signedIn) {
+      surface = <LoginPage theme={resolve("dark")} onSignedIn={() => setSignedIn(true)} />;
+    } else {
+      surface = <ResidentApp />;
+    }
+  }
+
+  return (
+    <main className="jeerah-root" dir={dir} lang={locale} data-surface={mode}>
+      {surface}
     </main>
   );
 }
@@ -49,7 +67,9 @@ export default function JeerahPrototype({ children, repository, createRepository
 
   return (
     <DemoProvider repository={repository} createRepository={createRepository}>
-      <I18nProvider>{mode === "preview" ? surface : <SurfacePortal mode={mode}>{surface}</SurfacePortal>}</I18nProvider>
+      <I18nProvider>
+        <ThemeProvider>{mode === "preview" ? surface : <SurfacePortal mode={mode}>{surface}</SurfacePortal>}</ThemeProvider>
+      </I18nProvider>
     </DemoProvider>
   );
 }

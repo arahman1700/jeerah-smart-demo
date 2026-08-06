@@ -71,8 +71,11 @@ afterEach(() => {
 });
 
 describe("Jeerah shell", () => {
-  it("uses direct resident mode on narrow app URLs", () => {
+  it("uses direct resident mode on app URLs and the launcher on the bare link", () => {
     expect(getRouteMode(new URL("https://demo.test/?surface=app"), "browser", 390)).toBe("resident");
+    expect(getRouteMode(new URL("https://demo.test/"), "browser", 1024)).toBe("launcher");
+    expect(getRouteMode(new URL("https://demo.test/"), "browser", 390)).toBe("launcher");
+    expect(getRouteMode(new URL("https://demo.test/"), "standalone", 390)).toBe("resident");
   });
 
   it("prioritizes explicit preview and admin routes", () => {
@@ -82,6 +85,7 @@ describe("Jeerah shell", () => {
 
   it("sets Arabic direction on the direct surface", async () => {
     window.history.replaceState({}, "", "/?surface=app");
+    localStorage.setItem("jeerah-demo-session", "active");
     render(<MobileRuntime><JeerahPrototype repository={makeRepository("en")} /></MobileRuntime>);
 
     tapLocaleToggle(await screen.findByRole("button", { name: /العربية/i }));
@@ -91,6 +95,7 @@ describe("Jeerah shell", () => {
 
   it("persists a locale choice and receives the same locale in a synchronized repository", async () => {
     window.history.replaceState({}, "", "/?surface=app");
+    localStorage.setItem("jeerah-demo-session", "active");
     const channelName = "shell-locale-sync";
     const repository = makeRepository("en", channelName);
     const peer = makeRepository("en", channelName);
@@ -108,6 +113,7 @@ describe("Jeerah shell", () => {
 
   it("uses the safe locale when persisted state is malformed, then persists a valid choice", async () => {
     window.history.replaceState({}, "", "/?surface=app");
+    localStorage.setItem("jeerah-demo-session", "active");
     const repository = createMemoryDemoRepository({ ...createSeedState(), locale: "malformed" } as unknown as DemoState, "shell-malformed-locale");
     repositories.add(repository);
     render(<MobileRuntime><JeerahPrototype repository={repository} /></MobileRuntime>);

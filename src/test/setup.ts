@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import { afterEach } from "vitest";
 import "fake-indexeddb/auto";
 import {
   installAnimationFrameShim,
@@ -7,6 +8,7 @@ import {
   installPointerAndScrollShims,
   installResizeObserverShim,
   installServiceWorkerShim,
+  installStorageShim,
 } from "./browserShims";
 
 installMatchMediaShim();
@@ -15,3 +17,12 @@ installPointerAndScrollShims();
 installAnimationFrameShim();
 installObjectUrlAndPrintShims();
 installServiceWorkerShim();
+installStorageShim();
+
+afterEach(() => {
+  try {
+    localStorage.clear();
+  } catch {
+    // The storage shim is always present in tests; guard for safety.
+  }
+});

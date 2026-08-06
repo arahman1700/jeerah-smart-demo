@@ -4,6 +4,7 @@ import { StrictMode, type ReactElement, type ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach } from "vitest";
 import { AdminRoutes } from "../../../src/jeerah/admin/AdminApp";
+import { ThemeProvider } from "../../../src/jeerah/app/theme";
 import { DemoProvider } from "../../../src/jeerah/data/DemoProvider";
 import { createMemoryDemoRepository, type DemoRepository } from "../../../src/jeerah/data/repository";
 import { createSeedState } from "../../../src/jeerah/domain/fixtures";
@@ -70,7 +71,9 @@ export function renderResident(options: ResidentRenderOptions = {}) {
     <MobileRuntime>
       <DemoProvider repository={repository}>
         <I18nProvider>
-          <ResidentApp initialScreen={screenId} simulation={simulation} />
+          <ThemeProvider>
+            <ResidentApp initialScreen={screenId} simulation={simulation} />
+          </ThemeProvider>
         </I18nProvider>
       </DemoProvider>
     </MobileRuntime>
@@ -132,9 +135,11 @@ export function renderAdmin(options: AdminRenderOptions = {}) {
   const result = render(
     <DemoProvider repository={repository}>
       <I18nProvider>
-        <MemoryRouter initialEntries={[initialPath]}>
-          <AdminRoutes />
-        </MemoryRouter>
+        <ThemeProvider>
+          <MemoryRouter initialEntries={[initialPath]}>
+            <AdminRoutes />
+          </MemoryRouter>
+        </ThemeProvider>
       </I18nProvider>
     </DemoProvider>,
     renderOptions,
@@ -225,7 +230,9 @@ export function renderLiveTwin(options: LiveTwinOptions = {}) {
     <MobileRuntime>
       <DemoProvider repository={residentRepository}>
         <I18nProvider>
-          <ResidentApp initialScreen={residentScreen} />
+          <ThemeProvider>
+            <ResidentApp initialScreen={residentScreen} />
+          </ThemeProvider>
         </I18nProvider>
       </DemoProvider>
     </MobileRuntime>,
@@ -233,9 +240,11 @@ export function renderLiveTwin(options: LiveTwinOptions = {}) {
   const adminView = render(
     <DemoProvider repository={adminRepository}>
       <I18nProvider>
-        <MemoryRouter initialEntries={[adminPath]}>
-          <AdminRoutes />
-        </MemoryRouter>
+        <ThemeProvider>
+          <MemoryRouter initialEntries={[adminPath]}>
+            <AdminRoutes />
+          </MemoryRouter>
+        </ThemeProvider>
       </I18nProvider>
     </DemoProvider>,
   );

@@ -2618,3 +2618,242 @@ body[data-jeerah-surface="admin"] {
 .admin-message-copy { display: grid; gap: 4px; flex: 1; min-inline-size: 0; }
 [data-unread="true"] .admin-message-copy strong { color: var(--js-deep-nexus); }
 .admin-offer-list li[data-unread="true"] { border-inline-start: 3px solid var(--js-warning); }
+
+/* === Launcher, login, and theme system === */
+
+#jeerah-launcher-surface {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  min-width: 320px;
+  min-height: 100dvh;
+  overflow: auto;
+  background: var(--js-deep-nexus);
+}
+
+.jeerah-launcher {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background:
+    radial-gradient(1200px 500px at 80% -10%, color-mix(in srgb, var(--js-steel-slate) 45%, transparent), transparent 70%),
+    var(--js-brand-gradient-dark);
+  color: var(--js-glow-white);
+  font-family: "Plus Jakarta Sans", "Readex Pro", sans-serif;
+}
+[dir="rtl"] .jeerah-launcher { font-family: "Readex Pro", "Plus Jakarta Sans", sans-serif; }
+
+.jeerah-launcher__top { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px; }
+.jeerah-launcher__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--js-glow-white) 25%, transparent);
+  background: color-mix(in srgb, var(--js-glow-white) 8%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--js-motion-fast);
+}
+.jeerah-launcher__chip:hover { background: color-mix(in srgb, var(--js-glow-white) 16%, transparent); }
+.jeerah-launcher__chip:focus-visible { outline: 2px solid var(--js-glow-white); outline-offset: 2px; }
+
+.jeerah-launcher__hero {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 24px clamp(16px, 5vw, 48px) 40px;
+  text-align: center;
+}
+.jeerah-launcher__logo { display: inline-block; margin-bottom: 6px; }
+.jeerah-launcher__hero h1 { margin: 0; font-size: clamp(26px, 4.5vw, 40px); letter-spacing: -0.01em; }
+.jeerah-launcher__hero > p { margin: 0; max-inline-size: 52ch; color: color-mix(in srgb, var(--js-glow-white) 72%, transparent); }
+
+.jeerah-launcher__install {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 22px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 999px;
+  background: var(--js-glow-white);
+  color: var(--js-deep-nexus);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgb(3 21 52 / 35%);
+}
+.jeerah-launcher__install:focus-visible { outline: 3px solid color-mix(in srgb, var(--js-glow-white) 60%, transparent); outline-offset: 2px; }
+.jeerah-launcher__hint, .jeerah-launcher__installed { margin: 0; font-size: 13px; color: color-mix(in srgb, var(--js-glow-white) 60%, transparent); max-inline-size: 46ch; }
+
+.jeerah-launcher__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  inline-size: min(920px, 100%);
+  margin-top: 26px;
+}
+.jeerah-launcher__option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--js-radius-lg);
+  border: 1px solid color-mix(in srgb, var(--js-glow-white) 14%, transparent);
+  background: color-mix(in srgb, var(--js-glow-white) 6%, transparent);
+  color: inherit;
+  text-decoration: none;
+  text-align: start;
+  transition: transform var(--js-motion-fast), background var(--js-motion-fast), border-color var(--js-motion-fast);
+}
+.jeerah-launcher__option:hover { transform: translateY(-3px); background: color-mix(in srgb, var(--js-glow-white) 11%, transparent); border-color: color-mix(in srgb, var(--js-glow-white) 30%, transparent); }
+.jeerah-launcher__option:focus-visible { outline: 2px solid var(--js-glow-white); outline-offset: 3px; }
+.jeerah-launcher__option-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 52px;
+  block-size: 52px;
+  border-radius: var(--js-radius-md);
+  background: color-mix(in srgb, var(--js-steel-slate) 55%, transparent);
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.jeerah-launcher__option-copy { display: grid; gap: 4px; }
+.jeerah-launcher__option-copy strong { font-size: 17px; }
+.jeerah-launcher__option-copy small { color: color-mix(in srgb, var(--js-glow-white) 65%, transparent); font-size: 13px; line-height: 1.5; }
+
+.jeerah-launcher__footer { padding: 18px 22px 26px; text-align: center; }
+.jeerah-launcher__footer p { margin: 0; font-size: 12px; color: color-mix(in srgb, var(--js-glow-white) 45%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .jeerah-launcher__option { transition: none; }
+  .jeerah-launcher__option:hover { transform: none; }
+}
+
+/* Light launcher */
+body[data-jeerah-theme="light"] .jeerah-launcher {
+  background:
+    radial-gradient(1200px 500px at 80% -10%, color-mix(in srgb, var(--js-steel-slate) 18%, transparent), transparent 70%),
+    var(--js-cloud);
+  color: var(--js-deep-nexus);
+}
+body[data-jeerah-theme="light"] .jeerah-launcher__chip { border-color: var(--js-border); background: var(--js-surface); }
+body[data-jeerah-theme="light"] .jeerah-launcher__hero > p,
+body[data-jeerah-theme="light"] .jeerah-launcher__option-copy small,
+body[data-jeerah-theme="light"] .jeerah-launcher__hint,
+body[data-jeerah-theme="light"] .jeerah-launcher__footer p { color: var(--js-muted); }
+body[data-jeerah-theme="light"] .jeerah-launcher__option { background: var(--js-surface); border-color: var(--js-border); box-shadow: 0 8px 26px rgb(3 21 52 / 8%); }
+body[data-jeerah-theme="light"] .jeerah-launcher__option-icon { background: color-mix(in srgb, var(--js-steel-slate) 14%, transparent); color: var(--js-steel-slate); }
+body[data-jeerah-theme="light"] .jeerah-launcher__install { background: var(--js-deep-nexus); color: var(--js-glow-white); }
+body[data-jeerah-theme="light"] #jeerah-launcher-surface { background: var(--js-cloud); }
+
+/* Login */
+.jeerah-login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(900px 420px at 20% -10%, color-mix(in srgb, var(--js-steel-slate) 40%, transparent), transparent 70%),
+    var(--js-brand-gradient-dark);
+  color: var(--js-glow-white);
+  font-family: "Plus Jakarta Sans", "Readex Pro", sans-serif;
+}
+[dir="rtl"] .jeerah-login { font-family: "Readex Pro", "Plus Jakarta Sans", sans-serif; }
+.jeerah-login__card {
+  inline-size: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 28px 24px;
+  border-radius: var(--js-radius-lg);
+  border: 1px solid color-mix(in srgb, var(--js-glow-white) 14%, transparent);
+  background: color-mix(in srgb, var(--js-glow-white) 6%, transparent);
+  backdrop-filter: blur(6px);
+}
+.jeerah-login__logo { justify-self: center; }
+.jeerah-login__card h1 { margin: 0; text-align: center; font-size: 24px; }
+.jeerah-login__intro { margin: 0; text-align: center; font-size: 13px; color: color-mix(in srgb, var(--js-glow-white) 65%, transparent); }
+.jeerah-login__demo {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--js-radius-md);
+  background: color-mix(in srgb, var(--js-warning) 22%, transparent);
+  font-size: 13px;
+  text-align: center;
+}
+.jeerah-login__demo code { font-weight: 700; }
+.jeerah-login__card form { display: grid; gap: 12px; }
+.jeerah-login__field { display: grid; gap: 6px; font-size: 13px; }
+.jeerah-login__field input {
+  min-height: 46px;
+  padding: 8px 14px;
+  border-radius: var(--js-radius-md);
+  border: 1px solid color-mix(in srgb, var(--js-glow-white) 22%, transparent);
+  background: color-mix(in srgb, var(--js-glow-white) 8%, transparent);
+  color: inherit;
+  font: inherit;
+}
+.jeerah-login__field input:focus-visible { outline: 2px solid var(--js-glow-white); outline-offset: 1px; }
+.jeerah-login__error { margin: 0; color: #ffb3c0; font-size: 13px; }
+.jeerah-login__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  border: none;
+  border-radius: 999px;
+  background: var(--js-glow-white);
+  color: var(--js-deep-nexus);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.jeerah-login__submit:focus-visible { outline: 3px solid color-mix(in srgb, var(--js-glow-white) 60%, transparent); outline-offset: 2px; }
+.jeerah-login__back { justify-self: center; color: color-mix(in srgb, var(--js-glow-white) 70%, transparent); font-size: 13px; }
+
+body[data-jeerah-theme="light"] .jeerah-login {
+  background:
+    radial-gradient(900px 420px at 20% -10%, color-mix(in srgb, var(--js-steel-slate) 16%, transparent), transparent 70%),
+    var(--js-cloud);
+  color: var(--js-deep-nexus);
+}
+body[data-jeerah-theme="light"] .jeerah-login__card { background: var(--js-surface); border-color: var(--js-border); box-shadow: var(--js-shadow-soft); }
+body[data-jeerah-theme="light"] .jeerah-login__intro, body[data-jeerah-theme="light"] .jeerah-login__back { color: var(--js-muted); }
+body[data-jeerah-theme="light"] .jeerah-login__field input { border-color: var(--js-border); background: var(--js-cloud); }
+body[data-jeerah-theme="light"] .jeerah-login__error { color: var(--js-danger); }
+body[data-jeerah-theme="light"] .jeerah-login__submit { background: var(--js-deep-nexus); color: var(--js-glow-white); }
+
+/* Light resident app: brand-dark hero stays; content goes light like the reference. */
+body[data-jeerah-theme="light"] .resident-app {
+  --resident-ink: var(--js-deep-nexus);
+  --resident-ink-muted: color-mix(in srgb, var(--js-deep-nexus) 60%, transparent);
+  --resident-ink-faint: color-mix(in srgb, var(--js-deep-nexus) 38%, transparent);
+  --resident-line: color-mix(in srgb, var(--js-deep-nexus) 12%, transparent);
+  --resident-panel: var(--js-surface);
+  --resident-panel-soft: color-mix(in srgb, var(--js-steel-slate) 7%, transparent);
+}
+body[data-jeerah-theme="light"] .resident-app .mobile-page { background: var(--js-cloud); }
+body[data-jeerah-theme="light"] #jeerah-resident-surface { background: var(--js-cloud); }
+
+/* Dark admin console */
+body[data-jeerah-theme="dark"] .jeerah-admin-surface {
+  --js-surface: #232849;
+  --js-cloud: #161a30;
+  --js-text: #edffff;
+  --js-muted: #a6aecb;
+  --js-border: #3a4169;
+  --js-shadow-soft: 0 18px 48px rgb(0 0 0 / 45%);
+  background: var(--js-cloud);
+  color: var(--js-text);
+}
+body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon { background: color-mix(in srgb, var(--js-steel-slate) 40%, transparent); color: var(--js-glow-white); }
+body[data-jeerah-theme="dark"] .admin-dialog, body[data-jeerah-theme="dark"] .admin-drawer { color: var(--js-glow-white); }
+body[data-jeerah-theme="dark"] #jeerah-admin-surface { background: #161a30; }
+body[data-jeerah-theme="dark"] .admin-table thead th { color: var(--js-muted); }

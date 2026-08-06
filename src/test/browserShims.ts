@@ -34,6 +34,8 @@ class MediaQueryListShim extends EventTarget implements MediaQueryList {
 }
 
 function matchesMediaQuery(query: string) {
+  // Tests simulate a regular browser tab, never an installed standalone app.
+  if (/display-mode/i.test(query)) return /display-mode:\s*browser/i.test(query);
   const minWidth = query.match(/min-width:\s*(\d+)px/i)?.[1];
   const maxWidth = query.match(/max-width:\s*(\d+)px/i)?.[1];
   return (!minWidth || viewport.width >= Number(minWidth)) && (!maxWidth || viewport.width <= Number(maxWidth));
@@ -109,4 +111,25 @@ export function installObjectUrlAndPrintShims() {
 
 export function installServiceWorkerShim() {
   Object.defineProperty(navigator, "serviceWorker", { configurable: true, value: {} });
+}
+
+/** jsdom here ships without Web Storage; tests need the browser contract. */
+export function installStorageShim() {
+  const backing = new Map<string, string>();
+  const storage = {
+    get length() {
+      return backing.size;
+    },
+    clear: () => backing.clear(),
+    getItem: (key: string) => backing.get(key) ?? null,
+    key: (index: number) => [...backing.keys()][index] ?? null,
+    removeItem: (key: string) => {
+      backing.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      backing.set(key, String(value));
+    },
+  } satisfies Storage;
+  Object.defineProperty(window, "localStorage", { configurable: true, value: storage });
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: storage });
 }

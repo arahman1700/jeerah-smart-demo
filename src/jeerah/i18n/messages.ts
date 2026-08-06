@@ -662,6 +662,62 @@ const task13Ar: Record<keyof typeof task13En, string> = {
   "admin.no_messages": "لا توجد رسائل تواصل.",
 };
 
+const task14En = {
+  "launcher.headline": "Smart living starts here",
+  "launcher.subline": "One fictional dataset, three surfaces. Pick where to start — everything is a safe local demo.",
+  "launcher.app_title": "Mobile app",
+  "launcher.app_body": "The resident experience — sign in with the demo account and install it like a real app.",
+  "launcher.preview_title": "Device preview",
+  "launcher.preview_body": "The same app inside a calibrated phone frame, ideal for desktop browsing.",
+  "launcher.admin_title": "Admin console",
+  "launcher.admin_body": "Manage buildings, finance, orders, publishing, and the live twin.",
+  "launcher.install_cta": "Install the app on this device",
+  "launcher.install_hint": "Open this page in Chrome on Android or Safari on iPhone to install it as an app.",
+  "launcher.options_label": "Demo surfaces",
+  "launcher.demo_note": "Frontend-only demo. All people, buildings, and payments are fictional — no money ever moves.",
+  "login.title": "Sign in",
+  "login.intro": "A local demo gate — nothing is sent anywhere.",
+  "login.demo_hint": "Demo account:",
+  "login.username": "Username",
+  "login.password": "Password",
+  "login.invalid": "Use the demo account shown above.",
+  "login.submit": "Sign in",
+  "login.back_to_launcher": "Back to the start page",
+  "theme.dark": "Dark mode",
+  "theme.light": "Light mode",
+  "theme.switch_dark": "Switch to dark mode",
+  "theme.switch_light": "Switch to light mode",
+  "profile.sign_out": "Sign out",
+} as const;
+
+const task14Ar: Record<keyof typeof task14En, string> = {
+  "launcher.headline": "الحياة الذكية تبدأ من هنا",
+  "launcher.subline": "بيانات خيالية واحدة، ثلاث واجهات. اختر نقطة البداية — كل شيء ديمو محلي آمن.",
+  "launcher.app_title": "تطبيق الجوال",
+  "launcher.app_body": "تجربة الساكن — سجّل الدخول بالحساب التجريبي وثبّته كتطبيق حقيقي.",
+  "launcher.preview_title": "معاينة الجهاز",
+  "launcher.preview_body": "التطبيق نفسه داخل إطار هاتف معاير، مثالي للتصفح من الحاسوب.",
+  "launcher.admin_title": "لوحة الإدارة",
+  "launcher.admin_body": "أدر المباني والمالية والطلبات والنشر والتوأم الحي.",
+  "launcher.install_cta": "ثبّت التطبيق على هذا الجهاز",
+  "launcher.install_hint": "افتح هذه الصفحة في كروم على أندرويد أو سفاري على آيفون لتثبيته كتطبيق.",
+  "launcher.options_label": "واجهات الديمو",
+  "launcher.demo_note": "ديمو واجهة أمامية فقط. جميع الأشخاص والمباني والمدفوعات خيالية — لا تتحرك أي أموال إطلاقًا.",
+  "login.title": "تسجيل الدخول",
+  "login.intro": "بوابة تجريبية محلية — لا يُرسل أي شيء لأي جهة.",
+  "login.demo_hint": "الحساب التجريبي:",
+  "login.username": "اسم المستخدم",
+  "login.password": "كلمة المرور",
+  "login.invalid": "استخدم الحساب التجريبي الظاهر أعلاه.",
+  "login.submit": "تسجيل الدخول",
+  "login.back_to_launcher": "العودة إلى صفحة البداية",
+  "theme.dark": "النمط الغامق",
+  "theme.light": "النمط الفاتح",
+  "theme.switch_dark": "التبديل إلى النمط الغامق",
+  "theme.switch_light": "التبديل إلى النمط الفاتح",
+  "profile.sign_out": "تسجيل الخروج",
+};
+
 const en = {
   "app.name": "Jeerah Smart",
   "app.demo": "Jeerah Smart demo",
@@ -908,6 +964,7 @@ const en = {
   ...task10En,
   ...task11En,
   ...task13En,
+  ...task14En,
 } as const;
 
 const ar: Record<keyof typeof en, string> = {
@@ -1156,6 +1213,7 @@ const ar: Record<keyof typeof en, string> = {
   ...task10Ar,
   ...task11Ar,
   ...task13Ar,
+  ...task14Ar,
 };
 
 export const messages = { en, ar } as const;
@@ -1219,4 +1277,5 @@ export const requiredPlanMessageKeys = [
   ...(Object.keys(task10En) as Array<keyof typeof task10En>),
   ...(Object.keys(task11En) as Array<keyof typeof task11En>),
   ...(Object.keys(task13En) as Array<keyof typeof task13En>),
+  ...(Object.keys(task14En) as Array<keyof typeof task14En>),
 ] as const satisfies readonly MessageKey[];

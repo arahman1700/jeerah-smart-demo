@@ -1,6 +1,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   Buildings,
+  Moon,
+  Sun,
   ChartLineUp,
   ChartPieSlice,
   ClipboardText,
@@ -30,6 +32,7 @@ import {
   type ReactNode,
 } from "react";
 import { NavLink } from "react-router-dom";
+import { useJeerahTheme } from "../app/theme";
 import { BrandIcon } from "../design/BrandIcon";
 import { JeerahLogo } from "../design/JeerahLogo";
 import { useI18n } from "../i18n/I18nProvider";
@@ -105,6 +108,8 @@ function NavLinks({ onNavigate, compact }: { onNavigate?: () => void; compact?: 
 
 export function AdminShell({ children, extraNav }: PropsWithChildren<{ extraNav?: ReactNode }>) {
   const { t, dir, locale, setLocale } = useI18n();
+  const { resolve, toggle } = useJeerahTheme();
+  const adminTheme = resolve("light");
   const width = useViewportWidth();
   const layout = width >= 1024 ? "desktop" : width >= 768 ? "rail" : "compact";
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -166,6 +171,15 @@ export function AdminShell({ children, extraNav }: PropsWithChildren<{ extraNav?
               {extraNav}
             </nav>
             <div className="admin-sidebar__footer">
+              <button
+                type="button"
+                className="admin-button admin-button--ghost"
+                data-testid="admin-theme-toggle"
+                onClick={() => toggle("light")}
+              >
+                {adminTheme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+                {t(adminTheme === "dark" ? "theme.light" : "theme.dark")}
+              </button>
               <button
                 type="button"
                 className="admin-button admin-button--ghost"
