@@ -147,7 +147,7 @@ function acceptablePlan(state: DemoState, plan: RecurringPlan): boolean {
   return !existing || existing.residentId === plan.residentId;
 }
 
-const canTransition = (from: OrderStatus, to: OrderStatus) => ORDER_TRANSITIONS[from]?.includes(to) === true;
+export const canTransition = (from: OrderStatus, to: OrderStatus) => ORDER_TRANSITIONS[from]?.includes(to) === true;
 
 function amenityFor(state: DemoState, amenityId: string, buildingId: string): Amenity | undefined {
   return state.amenities.find((item) => item.id === amenityId && item.buildingId === buildingId);
@@ -336,6 +336,7 @@ export function reduceDemoState(state: DemoState, action: DemoAction): DemoState
       if (action.attending && event.attendeeIds.length >= event.capacity) return state;
       return { ...state, events: updateById(state.events, action.eventId, (item) => ({ ...item, attendeeIds: action.attending ? [...item.attendeeIds, action.residentId] : item.attendeeIds.filter((id) => id !== action.residentId) })) };
     }
-    case "demo/reset": return createSeedState();
+    // Reset restores the seed fixtures but keeps the person's language choice.
+    case "demo/reset": return { ...createSeedState(), locale: state.locale };
   }
 }

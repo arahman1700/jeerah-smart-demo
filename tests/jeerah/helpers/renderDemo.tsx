@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, type RenderOptions } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within, type RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode, type ReactElement, type ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -190,6 +190,164 @@ export async function renderPayment(options: PaymentRenderOptions = {}) {
   await screen.findByTestId("payment-step-method");
 
   return { ...view, snapshot: () => view.repository.load() };
+}
+
+type LiveTwinOptions = {
+  residentScreen?: ResidentScreenId;
+  locale?: Locale;
+  adminPath?: string;
+};
+
+/**
+ * Renders the resident and admin surfaces side by side on two repository
+ * instances joined by the same in-memory channel — the live-twin proof
+ * harness. Query surfaces through `resident`/`admin` scoped queries and
+ * mutate through the domain-level drivers.
+ */
+export function renderLiveTwin(options: LiveTwinOptions = {}) {
+  const { residentScreen = "home", locale = "en", adminPath = "/" } = options;
+  const state = structuredClone(createSeedState());
+  state.locale = locale;
+  const channelName = nextChannelName();
+  const residentRepository = createMemoryDemoRepository(structuredClone(state), channelName);
+  const adminRepository = createMemoryDemoRepository(structuredClone(state), channelName);
+  const user = userEvent.setup();
+
+  const residentView = render(
+    <MobileRuntime>
+      <DemoProvider repository={residentRepository}>
+        <I18nProvider>
+          <ResidentApp initialScreen={residentScreen} />
+        </I18nProvider>
+      </DemoProvider>
+    </MobileRuntime>,
+  );
+  const adminView = render(
+    <DemoProvider repository={adminRepository}>
+      <I18nProvider>
+        <MemoryRouter initialEntries={[adminPath]}>
+          <AdminRoutes />
+        </MemoryRouter>
+      </I18nProvider>
+    </DemoProvider>,
+  );
+
+  const residentQueries = within(residentView.container);
+  const adminQueries = within(adminView.container);
+
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    liveRenders.delete(dispose);
+    residentView.unmount();
+    adminView.unmount();
+    residentRepository.close();
+    adminRepository.close();
+  };
+  liveRenders.add(dispose);
+
+  const admin = {
+    ...adminQueries,
+    repository: adminRepository,
+    container: adminView.container,
+    async goTo(linkName: RegExp | string) {
+      await user.click(adminQueries.getByRole("link", { name: linkName }));
+    },
+    async createInvoice(input: { title: string; amount: number; dueDate: string }) {
+      const { state: current } = await adminRepository.load();
+      await adminRepository.dispatch({
+        type: "invoice/created",
+        invoice: {
+          id: `invoice-twin-${(state.invoices.length + 1).toString(36)}-${input.title.replaceAll(/\W+/g, "-").toLowerCase()}`,
+          buildingId: current.currentBuildingId,
+          unitId: current.residents.find((resident) => resident.id === current.currentResidentId)?.unitId,
+          residentId: current.currentResidentId,
+          title: { en: input.title, ar: input.title },
+          category: "maintenance",
+          subtotal: input.amount,
+          tax: 0,
+          total: input.amount,
+          dueDate: new Date(input.dueDate).toISOString(),
+          status: "due",
+          createdAt: current.now,
+        },
+      });
+    },
+    async setServiceAvailability(serviceKey: string, active: boolean) {
+      const { state: current } = await adminRepository.load();
+      const offering = current.serviceOfferings.find((item) => item.key === serviceKey);
+      if (!offering) throw new Error(`Unknown service key ${serviceKey}`);
+      await adminRepository.dispatch({ type: "service/availability-changed", serviceId: offering.id, active });
+    },
+    async approveQuote(orderId: string, amount: number) {
+      const { state: current } = await adminRepository.load();
+      await adminRepository.dispatch({ type: "quote/provided", orderId, amount, occurredAt: current.now });
+      await adminRepository.dispatch({ type: "quote/approved", orderId, amount, occurredAt: current.now });
+    },
+    async getInvoiceStatus(invoiceId: string) {
+      const { state: current } = await adminRepository.load();
+      return current.invoices.find((invoice) => invoice.id === invoiceId)?.status;
+    },
+  };
+
+  const resident = {
+    ...residentQueries,
+    repository: residentRepository,
+    container: residentView.container,
+    async pay(invoiceId: string, method: "apple-pay" | "mada" | "visa", status: "paid" | "declined") {
+      const { state: current } = await residentRepository.load();
+      const invoice = current.invoices.find((item) => item.id === invoiceId);
+      if (!invoice) throw new Error(`Unknown invoice ${invoiceId}`);
+      await residentRepository.dispatch({
+        type: "payment/recorded",
+        payment: {
+          id: `payment-twin-${invoiceId}`,
+          invoiceId,
+          residentId: current.currentResidentId,
+          method,
+          status,
+          amount: invoice.total,
+          occurredAt: current.now,
+          reference: `DEMO-TWIN-${invoiceId.toUpperCase()}`,
+          ...(method === "mada" ? { last4: "4455" as const } : method === "visa" ? { last4: "4242" as const } : {}),
+        },
+      });
+    },
+    async requestQuote(serviceKey: string) {
+      const { state: current } = await residentRepository.load();
+      const offering = current.serviceOfferings.find((item) => item.key === serviceKey);
+      if (!offering) throw new Error(`Unknown service key ${serviceKey}`);
+      const orderId = `order-twin-${serviceKey}`;
+      const providerId = offering.providerIds[0];
+      if (!providerId) throw new Error(`Service ${serviceKey} has no provider`);
+      await residentRepository.dispatch({
+        type: "order/created",
+        order: {
+          id: orderId,
+          serviceId: offering.id,
+          providerId,
+          buildingId: current.currentBuildingId,
+          unitId: current.residents.find((resident) => resident.id === current.currentResidentId)?.unitId,
+          residentId: current.currentResidentId,
+          fulfillment: "quote",
+          status: "awaiting-quote",
+          timeline: [
+            {
+              id: `${orderId}-created`,
+              status: "awaiting-quote",
+              occurredAt: current.now,
+              note: { en: "Quote requested", ar: "تم طلب عرض السعر" },
+            },
+          ],
+          createdAt: current.now,
+        },
+      });
+      return orderId;
+    },
+  };
+
+  return { user, resident, admin, channelName, cleanup: dispose };
 }
 
 afterEach(() => {

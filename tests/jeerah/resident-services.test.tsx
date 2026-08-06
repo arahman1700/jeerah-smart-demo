@@ -316,7 +316,8 @@ describe("resident services journeys", () => {
     await peer.dispatch({ type: "demo/reset" });
 
     expect(await screen.findByTestId("missing-entity")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "رجوع" })).toBeVisible();
+    // demo/reset preserves the language choice, so the session stays English.
+    expect(screen.getByRole("button", { name: "Back" })).toBeVisible();
   });
 
   it("renders Arabic RTL copy, exact image alts, and no raw keys at 320px", async () => {

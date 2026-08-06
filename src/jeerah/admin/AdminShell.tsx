@@ -1,5 +1,22 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Buildings, ChartPieSlice, Door, List, UsersThree, X, type Icon } from "@phosphor-icons/react";
+import {
+  Buildings,
+  ChartLineUp,
+  ChartPieSlice,
+  ClipboardText,
+  CreditCard,
+  Scroll,
+  Door,
+  GearSix,
+  IdentificationBadge,
+  List,
+  Megaphone,
+  Receipt,
+  Storefront,
+  UsersThree,
+  X,
+  type Icon,
+} from "@phosphor-icons/react";
 import {
   createContext,
   useCallback,
@@ -28,6 +45,15 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { path: "/properties", labelKey: "nav.properties", icon: Buildings },
   { path: "/units", labelKey: "nav.units", icon: Door },
   { path: "/residents", labelKey: "nav.residents", icon: UsersThree },
+  { path: "/expenses", labelKey: "nav.finance", icon: Receipt },
+  { path: "/payments", labelKey: "nav.payments", icon: CreditCard },
+  { path: "/orders", labelKey: "nav.orders", icon: ClipboardText },
+  { path: "/marketplace", labelKey: "nav.marketplace", icon: Storefront },
+  { path: "/announcements", labelKey: "nav.announcements", icon: Megaphone },
+  { path: "/visitors-amenities", labelKey: "admin.visitors_amenities", icon: IdentificationBadge },
+  { path: "/analytics", labelKey: "nav.analytics", icon: ChartLineUp },
+  { path: "/audit", labelKey: "nav.audit", icon: Scroll },
+  { path: "/settings", labelKey: "nav.settings", icon: GearSix },
 ];
 
 function useViewportWidth() {

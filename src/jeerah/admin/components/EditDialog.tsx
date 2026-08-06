@@ -12,12 +12,14 @@ export function EditDialog({
   onOpenChange,
   onSubmit,
   children,
+  submitLabel,
 }: {
   title: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (form: FormData) => Promise<string | null> | string | null;
   children: ReactNode;
+  submitLabel?: string;
 }) {
   const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export function EditDialog({
                 </button>
               </Dialog.Close>
               <button type="submit" className="admin-button admin-button--primary">
-                {t("action.save")}
+                {submitLabel ?? t("action.save")}
               </button>
             </div>
           </form>

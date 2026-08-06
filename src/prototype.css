@@ -2506,3 +2506,22 @@ body[data-jeerah-surface="admin"] {
 @media (prefers-reduced-motion: reduce) {
   .admin-button, .admin-nav__link { transition: none; }
 }
+
+/* === Admin operations (Task 10) === */
+.admin-page__header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-page__header > h1, .admin-page__header > h2 { margin: 0; }
+.admin-demo-note { margin: 0; color: var(--js-muted); font-size: 13px; }
+.admin-demo-badge { display: inline-block; margin-inline-start: 8px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--js-warning) 18%, transparent); color: var(--js-deep-nexus); font-size: 11px; }
+.admin-inline-control { display: inline-flex; align-items: end; gap: 8px; flex-wrap: wrap; }
+.admin-order-actions { display: grid; gap: 10px; min-inline-size: 260px; }
+.admin-field--compact { font-size: 12px; }
+.admin-field--compact input, .admin-field--compact select { min-height: 40px; min-inline-size: 130px; }
+.admin-muted { color: var(--js-muted); font-size: 12px; display: block; }
+.admin-analytics-figure { font-size: 26px; font-weight: 700; margin: 0 0 8px; }
+.admin-offer-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.admin-offer-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px; border: 1px solid var(--js-border); border-radius: var(--js-radius-md); font-size: 13px; }
+.admin-scenarios { border: 1px solid var(--js-border); border-radius: var(--js-radius-md); padding: 12px; display: grid; gap: 8px; margin-block: 12px; }
+.admin-scenario { display: flex; align-items: center; gap: 10px; min-height: 44px; padding-inline: 8px; border-radius: var(--js-radius-sm); }
+.admin-scenario[data-selected="true"] { background: color-mix(in srgb, var(--js-steel-slate) 12%, transparent); }
+.admin-reset { margin-top: 18px; display: grid; gap: 10px; max-inline-size: 320px; }
+.admin-payment-brand { display: inline-flex; align-items: center; gap: 8px; }
