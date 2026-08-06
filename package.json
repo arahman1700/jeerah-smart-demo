@@ -11,7 +11,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "verify": "npm run check:runtime && npm run test:run && npm run build",
-    "build:pages": "npm run check:runtime && tsc && vite build --base=/jeerah-smart-demo/",
+    "build:pages": "npm run check:runtime && tsc && vite build --base=/jeerah-smart-demo/ && node scripts/fix-pages-base.mjs",
     "predev": "npm run check:runtime",
     "dev": "vite",
     "prebuild": "npm run check:runtime",
