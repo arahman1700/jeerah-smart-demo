@@ -55,6 +55,40 @@ interface InternalOptions extends RepositoryOptions {
 }
 
 const clone = <T,>(value: T): T => structuredClone(value);
+
+/**
+ * Persisted demo state survives deploys, but the fixtures evolve. A stale
+ * snapshot missing today's collections or localized fields would crash the
+ * UI, so hydration only accepts states that still match the current seed's
+ * shape; anything else is replaced by a fresh seed that keeps the person's
+ * language and scenario.
+ */
+export function isCompatiblePersistedState(candidate: unknown): candidate is DemoState {
+  if (!candidate || typeof candidate !== "object") return false;
+  const state = candidate as DemoState;
+  const seed = createSeedState();
+  if (state.schemaVersion !== seed.schemaVersion) return false;
+  const seedKeys = Object.keys(seed).sort().join("|");
+  const candidateKeys = Object.keys(state).sort().join("|");
+  if (seedKeys !== candidateKeys) return false;
+  if (!Array.isArray(state.serviceFamilies) || state.serviceFamilies.length !== seed.serviceFamilies.length) return false;
+  if (!Array.isArray(state.serviceOfferings) || state.serviceOfferings.length !== seed.serviceOfferings.length) return false;
+  return state.serviceOfferings.every(
+    (offering) =>
+      typeof offering?.name?.ar === "string" &&
+      typeof offering?.name?.en === "string" &&
+      Array.isArray(offering.searchAliases) &&
+      Array.isArray(offering.providerIds) &&
+      offering.providerIds.length > 0,
+  );
+}
+
+function reseedFromStale(initial: DemoState, stale: unknown): DemoState {
+  const fresh = clone(initial);
+  const staleState = stale as Partial<DemoState> | null;
+  if (staleState && (staleState.locale === "ar" || staleState.locale === "en")) fresh.locale = staleState.locale;
+  return fresh;
+}
 const source = () => globalThis.crypto?.randomUUID?.() ?? `demo-${Math.random().toString(36).slice(2)}`;
 
 function createRepository(options: InternalOptions = {}): DemoRepository {
@@ -158,6 +192,7 @@ function createRepository(options: InternalOptions = {}): DemoRepository {
   };
   const unsubscribeChannel = channel.subscribe((message) => {
     if (closed || message.sourceId === sourceId || message.revision <= revision) return;
+    if (!isCompatiblePersistedState(message.state)) return;
     state = clone(message.state);
     revision = message.revision;
     lastSyncAt = now().toISOString();
@@ -177,9 +212,19 @@ function createRepository(options: InternalOptions = {}): DemoRepository {
         const db = await database();
         const existing = await db.get(STORE_NAME, STATE_KEY);
         if (existing && existing.revision >= revision) {
-          state = existing.value;
-          revision = existing.revision;
-          lastSyncAt = existing.updatedAt;
+          if (isCompatiblePersistedState(existing.value)) {
+            state = existing.value;
+            revision = existing.revision;
+            lastSyncAt = existing.updatedAt;
+          } else {
+            const fresh = reseedFromStale(initialState, existing.value);
+            const nextRevision = existing.revision + 1;
+            const updatedAt = now().toISOString();
+            await db.put(STORE_NAME, { key: STATE_KEY, revision: nextRevision, value: fresh, updatedAt });
+            state = fresh;
+            revision = nextRevision;
+            lastSyncAt = updatedAt;
+          }
         }
       } catch {
         storageMode = "memory";

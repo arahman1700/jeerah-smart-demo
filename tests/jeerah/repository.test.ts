@@ -1,3 +1,4 @@
+import { openDB } from "idb";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryStateChannelFactory, createStateChannel, type StateChannel, type StateChannelFactory, type SyncMessage } from "../../src/jeerah/data/channel";
 import { createDemoRepository, type DemoRepository, type RepositoryOptions } from "../../src/jeerah/data/repository";
@@ -268,5 +269,31 @@ describe("state channel selection", () => {
     const memory = createStateChannel("selection-memory", "source");
     expect(memory.syncMode).toBe("memory");
     memory.close();
+  });
+});
+
+describe("stale persisted state hydration", () => {
+  it("replaces an incompatible persisted snapshot with a fresh seed that keeps the locale", async () => {
+    const dbName = `jeerah-stale-${Math.random().toString(36).slice(2)}`;
+    const stale = { schemaVersion: 2, locale: "en", buildings: [], serviceOfferings: [{ id: "old" }] };
+    const db = await openDB(dbName, 1, {
+      upgrade(database) {
+        database.createObjectStore("demo-state", { keyPath: "key" });
+      },
+    });
+    await db.put("demo-state", { key: "state", revision: 7, value: stale, updatedAt: "2026-08-03T00:00:00.000Z" });
+    db.close();
+
+    const repository = createDemoRepository({ dbName, channelName: `stale-${dbName}` });
+    try {
+      const { state, meta } = await repository.load();
+      expect(meta.storageMode).toBe("indexeddb");
+      expect(state.serviceOfferings).toHaveLength(35);
+      expect(state.serviceOfferings.every((offering) => typeof offering.name.ar === "string")).toBe(true);
+      expect(state.locale).toBe("en");
+      expect(meta.revision).toBe(8);
+    } finally {
+      repository.close();
+    }
   });
 });
