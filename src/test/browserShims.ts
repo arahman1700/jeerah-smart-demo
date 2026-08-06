@@ -89,8 +89,16 @@ export function installPointerAndScrollShims() {
 }
 
 export function installAnimationFrameShim() {
-  window.requestAnimationFrame = (callback) => window.setTimeout(() => callback(Date.now()), 0);
-  window.cancelAnimationFrame = (handle) => window.clearTimeout(handle);
+  // Capture the environment's window: animation loops (e.g. Motion's frame
+  // batcher) can re-enter this shim from a timer that fires after the jsdom
+  // global is torn down, where a bare `window` reference throws.
+  const environmentWindow = window;
+  environmentWindow.requestAnimationFrame = (callback) =>
+    environmentWindow.setTimeout(() => {
+      if (typeof window === "undefined") return;
+      callback(Date.now());
+    }, 0);
+  environmentWindow.cancelAnimationFrame = (handle) => environmentWindow.clearTimeout(handle);
 }
 
 export function installObjectUrlAndPrintShims() {
