@@ -5,9 +5,14 @@ import { useMobileDevice } from "../../mobile/Device";
 import type { FlowControls, FlowScreen } from "../../mobile/FlowStack";
 import { FlowStack } from "../../mobile/FlowStack";
 import { useI18n } from "../i18n/I18nProvider";
+import { PaymentSimulationProvider, type PaymentSimulationConfig } from "./PaymentSimulation";
 import { ResidentNav, toResidentNavId } from "./ResidentNav";
 import { BuildingPage } from "./pages/BuildingPage";
+import { ExpensesPage } from "./pages/ExpensesPage";
 import { HomePage } from "./pages/HomePage";
+import { InvoicePage } from "./pages/InvoicePage";
+import { PaymentHistoryPage } from "./pages/PaymentHistoryPage";
+import { PaymentPage } from "./pages/PaymentPage";
 import { PropertiesPage } from "./pages/PropertiesPage";
 import { SecondaryPage, type SecondaryScreenId } from "./pages/SecondaryPage";
 import { UnitPage } from "./pages/UnitPage";
@@ -49,7 +54,46 @@ function DetailHeader({ flow, fallback }: { flow: FlowControls; fallback: () => 
 
 const buildingScreens = new Map<string, FlowScreen>();
 const unitScreens = new Map<string, FlowScreen>();
+const invoiceScreens = new Map<string, FlowScreen>();
+const paymentScreens = new Map<string, FlowScreen>();
 const rootScreens = new Map<ResidentScreenId, FlowScreen>();
+let paymentHistoryScreen: FlowScreen | undefined;
+
+/** Payment-journey details carry no resident footer, only a localized Back. */
+function detailScreen(id: string, render: FlowScreen["render"], header = true): FlowScreen {
+  return {
+    id,
+    ...(header
+      ? {
+        header: (flow: FlowControls) => <DetailHeader flow={flow} fallback={() => getResidentScreen("expenses")} />,
+        headerHeight: HEADER_HEIGHT,
+      }
+      : {}),
+    render,
+  };
+}
+
+export function getInvoiceScreen(invoiceId: string): FlowScreen {
+  const existing = invoiceScreens.get(invoiceId);
+  if (existing) return existing;
+  const screen = detailScreen("invoice", (flow) => <InvoicePage invoiceId={invoiceId} flow={flow} />);
+  invoiceScreens.set(invoiceId, screen);
+  return screen;
+}
+
+/** The payment route owns its own Back control because it locks during processing. */
+export function getPaymentScreen(invoiceId: string): FlowScreen {
+  const existing = paymentScreens.get(invoiceId);
+  if (existing) return existing;
+  const screen = detailScreen("payment", (flow) => <PaymentPage invoiceId={invoiceId} flow={flow} />, false);
+  paymentScreens.set(invoiceId, screen);
+  return screen;
+}
+
+export function getPaymentHistoryScreen(): FlowScreen {
+  paymentHistoryScreen ??= detailScreen("payment-history", () => <PaymentHistoryPage />);
+  return paymentHistoryScreen;
+}
 
 export function getBuildingScreen(buildingId: string): FlowScreen {
   const existing = buildingScreens.get(buildingId);
@@ -85,6 +129,7 @@ function createRootScreen(id: Exclude<ResidentScreenId, "building" | "unit">): F
   const base = { id, footer, footerHeight: FOOTER_HEIGHT };
   if (id === "home") return { ...base, render: (flow) => <HomePage flow={flow} /> };
   if (id === "properties") return { ...base, render: (flow) => <PropertiesPage flow={flow} /> };
+  if (id === "expenses") return { ...base, render: (flow) => <ExpensesPage flow={flow} /> };
   return { ...base, render: () => <SecondaryPage id={id as SecondaryScreenId} /> };
 }
 
@@ -98,7 +143,10 @@ export function getResidentScreen(id: ResidentScreenId): FlowScreen {
   return screen;
 }
 
-export function ResidentApp({ initialScreen = "home" }: { initialScreen?: ResidentScreenId }) {
+export function ResidentApp({ initialScreen = "home", simulation }: {
+  initialScreen?: ResidentScreenId;
+  simulation?: PaymentSimulationConfig;
+}) {
   const { dir, locale, t } = useI18n();
   const { device } = useMobileDevice();
   const reduceMotion = useReducedMotion();
@@ -114,7 +162,9 @@ export function ResidentApp({ initialScreen = "home" }: { initialScreen?: Reside
       lang={locale}
       style={{ "--resident-safe-top": `${device.geometry.safeArea.top}px` } as CSSProperties}
     >
-      <FlowStack initial={getResidentScreen(initialScreen)} />
+      <PaymentSimulationProvider config={simulation}>
+        <FlowStack initial={getResidentScreen(initialScreen)} />
+      </PaymentSimulationProvider>
     </section>
   );
 }

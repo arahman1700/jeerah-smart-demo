@@ -1,5 +1,6 @@
 import { createSeedState } from "./fixtures";
-import type { DemoAction, DemoState, OrderStatus, Payment, ServiceOrder } from "./models";
+import type { Activity, AuditEntry, DemoAction, DemoState, Invoice, InvoiceStatus, OrderStatus, Payment, ServiceOrder } from "./models";
+import { PAYMENT_METHODS, PAYMENT_METHOD_MASK, PAYMENT_STATUSES } from "./models";
 import { applyScenario } from "../data/scenarios";
 
 const note = (status: OrderStatus) => ({ ar: `تم تحديث الطلب إلى ${status}`, en: `Order updated to ${status}` });
@@ -20,9 +21,40 @@ function validInvoice(state: DemoState, invoice: { buildingId: string; unitId?: 
   return !invoice.residentId || residentAt(state, invoice.residentId, invoice.buildingId, invoice.unitId);
 }
 
-function validPayment(state: DemoState, payment: Payment): boolean {
+const PAYABLE_INVOICE_STATUSES = new Set<InvoiceStatus>(["due", "overdue", "upcoming"]);
+const filled = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+
+/**
+ * A demo payment may only be recorded against an existing, payable invoice that
+ * belongs to the paying resident, for that invoice's exact total, with the mask
+ * its method is allowed to show. Anything else leaves the state untouched.
+ */
+function payableInvoiceFor(state: DemoState, payment: Payment): Invoice | undefined {
+  if (!filled(payment.id) || !filled(payment.reference) || !filled(payment.occurredAt)) return undefined;
+  if (!PAYMENT_METHODS.includes(payment.method) || !PAYMENT_STATUSES.includes(payment.status)) return undefined;
+  if (payment.last4 !== PAYMENT_METHOD_MASK[payment.method]) return undefined;
+  if (!state.residents.some((resident) => resident.id === payment.residentId)) return undefined;
   const invoice = state.invoices.find((item) => item.id === payment.invoiceId);
-  return Boolean(invoice && invoice.residentId === payment.residentId);
+  if (!invoice || invoice.residentId !== payment.residentId) return undefined;
+  if (!PAYABLE_INVOICE_STATUSES.has(invoice.status)) return undefined;
+  if (!Number.isFinite(payment.amount) || payment.amount <= 0 || payment.amount !== invoice.total) return undefined;
+  return invoice;
+}
+
+/** Audit and activity identifiers are derived from the payment so replays stay idempotent. */
+function paymentAudit(payment: Payment, action: string, id: string, description: AuditEntry["description"], occurredAt: string): AuditEntry {
+  return { id, actorId: payment.residentId, action, entityType: "payment", entityId: payment.id, description, occurredAt };
+}
+
+function paidActivity(payment: Payment, invoice: Invoice): Activity {
+  return {
+    id: `activity-${payment.id}`,
+    buildingId: invoice.buildingId,
+    kind: "payment",
+    title: { ar: "تم دفع فاتورة تجريبية", en: "Demo invoice paid" },
+    description: invoice.title,
+    occurredAt: payment.occurredAt,
+  };
 }
 
 function reconcileInvoice(state: DemoState, payments: Payment[], invoiceId: string) {
@@ -52,15 +84,39 @@ export function reduceDemoState(state: DemoState, action: DemoAction): DemoState
     }
     case "invoice/created": return validInvoice(state, action.invoice) && !hasId(state.invoices, action.invoice.id) ? { ...state, invoices: [...state.invoices, action.invoice] } : state;
     case "payment/recorded": {
-      if (!validPayment(state, action.payment) || hasId(state.payments, action.payment.id)) return state;
-      const payments = [...state.payments, action.payment];
-      return { ...state, payments, invoices: reconcileInvoice(state, payments, action.payment.invoiceId) };
+      const payment = action.payment;
+      if (hasId(state.payments, payment.id)) return state;
+      const invoice = payableInvoiceFor(state, payment);
+      if (!invoice) return state;
+      const payments = [...state.payments, payment];
+      const auditLog = [...state.auditLog, paymentAudit(
+        payment, "payment/recorded", `audit-${payment.id}`,
+        { ar: "تم تسجيل دفعة تجريبية", en: "Demo payment recorded" }, payment.occurredAt,
+      )];
+      if (payment.status !== "paid") return { ...state, payments, auditLog };
+      return {
+        ...state,
+        payments,
+        auditLog,
+        invoices: updateById(state.invoices, invoice.id, (item) => ({ ...item, status: "paid" })),
+        activities: [...state.activities, paidActivity(payment, invoice)],
+      };
     }
     case "payment/status-changed": {
       const payment = state.payments.find((item) => item.id === action.paymentId);
-      if (!payment) return state;
+      if (!payment || !PAYMENT_STATUSES.includes(action.status) || !filled(action.occurredAt)) return state;
+      const auditId = `audit-${action.paymentId}-${action.status}-${action.occurredAt}`;
+      if (hasId(state.auditLog, auditId)) return state;
       const payments = updateById(state.payments, action.paymentId, (item) => ({ ...item, status: action.status, occurredAt: action.occurredAt }));
-      return { ...state, payments, invoices: reconcileInvoice(state, payments, payment.invoiceId) };
+      return {
+        ...state,
+        payments,
+        invoices: reconcileInvoice(state, payments, payment.invoiceId),
+        auditLog: [...state.auditLog, paymentAudit(
+          payment, "payment/status-changed", auditId,
+          { ar: "تم تحديث حالة دفعة تجريبية", en: "Demo payment status updated" }, action.occurredAt,
+        )],
+      };
     }
     case "order/created": {
       const service = state.serviceOfferings.find((item) => item.id === action.order.serviceId);

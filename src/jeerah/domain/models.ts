@@ -1,8 +1,15 @@
 export type Locale = "ar" | "en";
 export type DemoScenario = "normal" | "empty" | "offline" | "overdue" | "declined" | "urgent-maintenance";
 export type InvoiceStatus = "due" | "paid" | "overdue" | "upcoming";
-export type PaymentMethod = "apple-pay" | "mada" | "visa";
-export type PaymentStatus = "paid" | "pending" | "declined" | "cancelled" | "timed-out" | "refunded";
+export const PAYMENT_METHODS = ["apple-pay", "mada", "visa"] as const;
+export const PAYMENT_STATUSES = ["paid", "pending", "declined", "cancelled", "timed-out", "refunded"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+export type PaymentMask = "4455" | "4242";
+/** The demo only ever shows these masks, and Apple Pay never exposes one. */
+export const PAYMENT_METHOD_MASK: Record<PaymentMethod, PaymentMask | undefined> = {
+  "apple-pay": undefined, mada: "4455", visa: "4242",
+};
 export type LocalizedText = { ar: string; en: string };
 export type ServiceFamilyId =
   | "care-cleaning" | "home-maintenance" | "building-tech-safety" | "water-utilities"
@@ -49,7 +56,7 @@ export interface NeighborDeal { id: string; serviceId: string; buildingId: strin
 export interface NeighborRelationship { id: string; displayName: LocalizedText; relation: "neighbor" | "friend" | "family"; }
 export interface NeighborGift { id: string; serviceId: string; senderId: string; recipientRelationshipId: string; message: string; status: "sent" | "redeemed"; createdAt: string; }
 export interface ServiceOffering { id: string; familyId: ServiceFamilyId; providerIds: string[]; key: RequiredServiceKey; name: LocalizedText; scope: ServiceScope; fulfillment: ServiceFulfillment[]; pricingModel: PricingModel; price?: number; startingPrice?: number; unitLabel?: LocalizedText; etaMinutes?: number; slaMinutes?: number; durationMinutes?: number; warrantyDays?: number; active: boolean; }
-export interface Payment { id: string; invoiceId: string; residentId: string; method: PaymentMethod; status: PaymentStatus; amount: number; occurredAt: string; reference: string; last4?: "4455" | "4242"; }
+export interface Payment { id: string; invoiceId: string; residentId: string; method: PaymentMethod; status: PaymentStatus; amount: number; occurredAt: string; reference: string; last4?: PaymentMask; }
 export interface DemoState { schemaVersion: 2; locale: Locale; scenario: DemoScenario; currentResidentId: string; currentBuildingId: string; buildings: Building[]; units: Unit[]; residents: Resident[]; invoices: Invoice[]; payments: Payment[]; serviceFamilies: ServiceFamily[]; serviceOfferings: ServiceOffering[]; providers: ServiceProvider[]; orders: ServiceOrder[]; memberOffers: MemberOffer[]; recurringPlans: RecurringPlan[]; neighborDeals: NeighborDeal[]; neighborRelationships: NeighborRelationship[]; announcements: Announcement[]; polls: Poll[]; events: CommunityEvent[]; visitorPasses: VisitorPass[]; amenityBookings: AmenityBooking[]; gifts: NeighborGift[]; activities: Activity[]; auditLog: AuditEntry[]; }
 
 export type DemoAction =

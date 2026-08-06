@@ -4,6 +4,7 @@ import type {
   RequiredServiceKey, ServiceFamily, ServiceFamilyId, ServiceOffering, ServiceOrder, ServiceProvider,
   Unit, VisitorPass,
 } from "./models";
+import { PAYMENT_METHOD_MASK } from "./models";
 
 export const BUILDING_IDS = ["building-89", "nakheel-court", "jeddah-view", "wadi-homes"] as const;
 export const SERVICE_FAMILY_IDS = ["care-cleaning", "home-maintenance", "building-tech-safety", "water-utilities", "automotive-mobility", "daily-needs", "home-fitout-moving", "community-membership"] as const;
@@ -128,7 +129,11 @@ const orders: ServiceOrder[] = orderRows.map((row) => {
 const paymentRows: Array<[string, string, Payment["status"]]> = [
   ["invoice-elevator", "resident-saif", "pending"], ["invoice-89-paid-1", "resident-lina", "paid"], ["invoice-89-paid-2", "resident-omar", "paid"], ["invoice-89-paid-3", "resident-saif", "paid"], ["invoice-nakheel-due", "resident-noura", "declined"], ["invoice-nakheel-overdue", "resident-yara", "cancelled"], ["invoice-jeddah-upcoming", "resident-hassan", "timed-out"], ["invoice-jeddah-paid", "resident-maha", "paid"], ["invoice-wadi-due", "resident-adel", "refunded"], ["invoice-wadi-upcoming", "resident-adel", "pending"], ["invoice-elevator", "resident-saif", "pending"], ["invoice-nakheel-due", "resident-noura", "declined"],
 ];
-const payments: Payment[] = paymentRows.map(([invoiceId, residentId, status], index) => ({ id: `payment-${index + 1}`, invoiceId, residentId, method: (["mada", "visa", "apple-pay"] as const)[index % 3], status, amount: invoices.find((invoice) => invoice.id === invoiceId)!.total, occurredAt: DATE, reference: `DEMO-${String(index + 1).padStart(4, "0")}`, last4: index % 2 === 0 ? "4455" : "4242" }));
+const payments: Payment[] = paymentRows.map(([invoiceId, residentId, status], index) => {
+  const method = (["mada", "visa", "apple-pay"] as const)[index % 3];
+  const last4 = PAYMENT_METHOD_MASK[method];
+  return { id: `payment-${index + 1}`, invoiceId, residentId, method, status, amount: invoices.find((invoice) => invoice.id === invoiceId)!.total, occurredAt: DATE, reference: `DEMO-${String(index + 1).padStart(4, "0")}`, ...(last4 ? { last4 } : {}) };
+});
 const memberOffers: MemberOffer[] = Array.from({ length: 8 }, (_, index) => ({ id: `member-offer-${index + 1}`, serviceId: serviceOfferings[index].id, title: serviceOfferings[index].name, regularPrice: 100 + index * 20, memberPrice: 80 + index * 15, active: index !== 7 }));
 const recurringPlans: RecurringPlan[] = Array.from({ length: 5 }, (_, index) => ({ id: `plan-${index + 1}`, serviceId: serviceOfferings[15 + index].id, residentId: residents[index].id, cadence: (["weekly", "monthly", "quarterly", "seasonal", "monthly"] as const)[index], nextDate: "2026-08-10T09:00:00+03:00", active: index !== 4, skippedDates: index === 2 ? ["2026-08-10T09:00:00+03:00"] : [] }));
 const neighborDeals: NeighborDeal[] = [0, 1, 2].map((index) => ({ id: `deal-${index + 1}`, serviceId: serviceOfferings[27 + index].id, buildingId: "building-89", participantIds: residents.slice(0, index + 1).map((resident) => resident.id), thresholds: [{ count: 3, unitPrice: 75 }, { count: 6, unitPrice: 60 }], closesAt: "2026-08-10T18:00:00+03:00" }));
