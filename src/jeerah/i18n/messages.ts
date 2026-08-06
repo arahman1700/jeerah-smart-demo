@@ -516,6 +516,28 @@ const task10Ar: Record<keyof typeof task10En, string> = {
   "admin.demo_disclaimer": "ديمو واجهة فقط ببيانات خيالية. المدفوعات محاكاة ولا يتم تحويل أي أموال.",
 };
 
+const task11En = {
+  "install.installed": "The demo is installed on this device.",
+  "install.native_button": "Install the app",
+  "install.dismissed": "Installation dismissed — you can retry anytime.",
+  "install.ios_step_share": "Open the Share menu in Safari.",
+  "install.ios_step_add": "Choose Add to Home Screen.",
+  "install.ios_step_open": "Open Jeerah Smart from your home screen.",
+  "install.offline_title": "Offline behavior",
+  "install.offline_limits": "Offline you can read cached data; demo payments, bookings, and publishing need a connection.",
+} as const;
+
+const task11Ar: Record<keyof typeof task11En, string> = {
+  "install.installed": "التطبيق التجريبي مثبت على هذا الجهاز.",
+  "install.native_button": "ثبّت التطبيق",
+  "install.dismissed": "تم إغلاق التثبيت — يمكنك المحاولة في أي وقت.",
+  "install.ios_step_share": "افتح قائمة المشاركة في سفاري.",
+  "install.ios_step_add": "اختر «الإضافة إلى الشاشة الرئيسية».",
+  "install.ios_step_open": "افتح جيرة سمارت من شاشتك الرئيسية.",
+  "install.offline_title": "العمل دون اتصال",
+  "install.offline_limits": "دون اتصال يمكنك قراءة البيانات المخزنة؛ الدفع والحجز والنشر التجريبية تتطلب اتصالًا.",
+};
+
 const en = {
   "app.name": "Jeerah Smart",
   "app.demo": "Jeerah Smart demo",
@@ -760,6 +782,7 @@ const en = {
   ...task8En,
   ...task9En,
   ...task10En,
+  ...task11En,
 } as const;
 
 const ar: Record<keyof typeof en, string> = {
@@ -1006,6 +1029,7 @@ const ar: Record<keyof typeof en, string> = {
   ...task8Ar,
   ...task9Ar,
   ...task10Ar,
+  ...task11Ar,
 };
 
 export const messages = { en, ar } as const;
@@ -1067,4 +1091,5 @@ export const requiredPlanMessageKeys = [
   ...(Object.keys(task8En) as Array<keyof typeof task8En>),
   ...(Object.keys(task9En) as Array<keyof typeof task9En>),
   ...(Object.keys(task10En) as Array<keyof typeof task10En>),
+  ...(Object.keys(task11En) as Array<keyof typeof task11En>),
 ] as const satisfies readonly MessageKey[];

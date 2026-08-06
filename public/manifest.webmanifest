@@ -1,0 +1,16 @@
+{
+  "name": "Jeerah Smart Demo",
+  "short_name": "Jeerah",
+  "description": "Installable resident experience for the Jeerah Smart demo",
+  "start_url": "./?surface=app",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#191C2E",
+  "theme_color": "#191C2E",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -1,11 +1,12 @@
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import { useReducedMotion } from "motion/react";
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { useMobileDevice } from "../../mobile/Device";
 import type { FlowControls, FlowScreen } from "../../mobile/FlowStack";
 import { FlowStack } from "../../mobile/FlowStack";
 import type { ServiceFamilyId } from "../domain/models";
 import { useI18n } from "../i18n/I18nProvider";
+import { registerServiceWorker } from "../pwa/registerServiceWorker";
 import { PaymentSimulationProvider, type PaymentSimulationConfig } from "./PaymentSimulation";
 import { ResidentNav, toResidentNavId } from "./ResidentNav";
 import { AmenitiesPage } from "./pages/AmenitiesPage";
@@ -191,6 +192,11 @@ export function ResidentApp({ initialScreen = "home", simulation }: {
   const { dir, locale, t } = useI18n();
   const { device } = useMobileDevice();
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    // The worker only exists in built output; skip it in dev and tests.
+    if (import.meta.env.PROD) void registerServiceWorker();
+  }, []);
 
   return (
     <section
