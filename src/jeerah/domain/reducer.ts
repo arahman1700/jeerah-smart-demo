@@ -1,13 +1,25 @@
-import { createSeedState } from "./fixtures";
-import type { Activity, AuditEntry, DemoAction, DemoState, Invoice, InvoiceStatus, OrderStatus, Payment, ServiceOrder } from "./models";
-import { PAYMENT_METHODS, PAYMENT_METHOD_MASK, PAYMENT_STATUSES } from "./models";
+import { ORDER_STATUS_NOTES, createSeedState } from "./fixtures";
+import type {
+  Activity, Amenity, AuditEntry, DemoAction, DemoState, Invoice, InvoiceStatus, NeighborDeal, OrderStatus,
+  Payment, RecurringPlan, ServiceOffering, ServiceOrder,
+} from "./models";
+import {
+  INITIAL_ORDER_STATUS, ORDER_STATUSES, ORDER_TRANSITIONS, PAYMENT_METHODS, PAYMENT_METHOD_MASK,
+  PAYMENT_STATUSES, READ_ONLY_ACTION_TYPES, SERVICE_FULFILLMENTS,
+} from "./models";
+import { dealIsOrderable, dealUnitPrice } from "./serviceCatalog";
 import { applyScenario } from "../data/scenarios";
 
-const note = (status: OrderStatus) => ({ ar: `تم تحديث الطلب إلى ${status}`, en: `Order updated to ${status}` });
+const note = (status: OrderStatus) => ({ ar: ORDER_STATUS_NOTES[status][0], en: ORDER_STATUS_NOTES[status][1] });
 const hasId = <T extends { id: string }>(items: T[], id: string) => items.some((item) => item.id === id);
 const updateById = <T extends { id: string }>(items: T[], id: string, update: (item: T) => T): T[] => items.map((item) => item.id === id ? update(item) : item);
 const upsert = <T extends { id: string }>(items: T[], item: T): T[] => hasId(items, item.id) ? updateById(items, item.id, () => item) : [...items, item];
 const addTimeline = (order: ServiceOrder, status: OrderStatus, occurredAt: string): ServiceOrder => ({ ...order, status, timeline: [...order.timeline, { id: `${order.id}-${status}-${occurredAt}`, status, occurredAt, note: note(status) }] });
+
+const filled = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+const positive = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value > 0;
+const isoTime = (value: unknown): value is string => filled(value) && Number.isFinite(Date.parse(value));
+const before = (left: string, right: string) => Date.parse(left) < Date.parse(right);
 
 function residentAt(state: DemoState, residentId: string, buildingId: string, unitId?: string): boolean {
   const resident = state.residents.find((item) => item.id === residentId);
@@ -22,7 +34,6 @@ function validInvoice(state: DemoState, invoice: { buildingId: string; unitId?: 
 }
 
 const PAYABLE_INVOICE_STATUSES = new Set<InvoiceStatus>(["due", "overdue", "upcoming"]);
-const filled = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 
 /**
  * A demo payment may only be recorded against an existing, payable invoice that
@@ -64,7 +75,91 @@ function reconcileInvoice(state: DemoState, payments: Payment[], invoiceId: stri
   return nextStatus === invoice.status ? state.invoices : updateById(state.invoices, invoiceId, (item) => ({ ...item, status: nextStatus }));
 }
 
+function groupDealFor(state: DemoState, order: ServiceOrder): NeighborDeal | undefined {
+  return state.neighborDeals.find((deal) => deal.id === order.dealId && deal.serviceId === order.serviceId && deal.buildingId === order.buildingId);
+}
+
+/**
+ * Money on the order must agree with how the catalog says the service is priced,
+ * including the member offer or group tier the resident actually qualified for.
+ * A quote order carries no amount at all until its quote is approved.
+ */
+function orderAmountIsCoherent(state: DemoState, service: ServiceOffering, order: ServiceOrder): boolean {
+  if (order.fulfillment === "quote") return order.amount === undefined && order.quoteAmount === undefined;
+  if (order.quoteAmount !== undefined || !positive(order.amount)) return false;
+  const quantity = order.quantity ?? 1;
+  if (!Number.isInteger(quantity) || quantity < 1) return false;
+
+  const offer = order.offerId ? state.memberOffers.find((item) => item.id === order.offerId) : undefined;
+  if (order.offerId && !offer) return false;
+  const deal = order.dealId ? groupDealFor(state, order) : undefined;
+  if (order.dealId && !deal) return false;
+
+  if (deal) return order.amount === dealUnitPrice(deal) * quantity;
+  if (offer) return order.amount === offer.memberPrice * quantity;
+  if (service.pricingModel === "quote-required") return false;
+  if (service.pricingModel === "starting-at") return order.amount! >= (service.startingPrice ?? 0) * quantity;
+  return order.amount === (service.price ?? -1) * quantity;
+}
+
+/**
+ * A brand-new order must be internally coherent before it can exist: an active
+ * service that supports the chosen mode, a provider that actually serves it, the
+ * exact initial status for that mode, one matching first timeline event, the
+ * schedule or ETA the mode needs, and a group deal that has really opened.
+ */
+function acceptableNewOrder(state: DemoState, order: ServiceOrder): boolean {
+  if (!filled(order.id) || hasId(state.orders, order.id) || !isoTime(order.createdAt)) return false;
+  if (!SERVICE_FULFILLMENTS.includes(order.fulfillment)) return false;
+  const service = state.serviceOfferings.find((item) => item.id === order.serviceId);
+  if (!service || !service.active || !service.fulfillment.includes(order.fulfillment)) return false;
+  if (!order.providerId || !service.providerIds.includes(order.providerId)) return false;
+  if (!residentAt(state, order.residentId, order.buildingId, order.unitId)) return false;
+  if (order.status !== INITIAL_ORDER_STATUS[order.fulfillment]) return false;
+  if (order.timeline.length !== 1 || order.timeline[0].status !== order.status || !isoTime(order.timeline[0].occurredAt)) return false;
+  if (order.rating !== undefined) return false;
+  if (order.sampleImageIds && (order.fulfillment !== "quote" || !order.sampleImageIds.every(filled))) return false;
+  if (!orderAmountIsCoherent(state, service, order)) return false;
+  if (order.fulfillment === "on-demand" && !positive(order.etaMinutes)) return false;
+  if (order.fulfillment !== "on-demand" && order.fulfillment !== "quote") {
+    if (!isoTime(order.scheduledAt) || !before(state.now, order.scheduledAt!)) return false;
+  }
+  if (order.offerId) {
+    const offer = state.memberOffers.find((item) => item.id === order.offerId);
+    if (!offer || !offer.active || offer.serviceId !== service.id) return false;
+    if (!before(state.now, offer.validUntil)) return false;
+    if (state.residents.find((item) => item.id === order.residentId)?.subscriber !== true) return false;
+  }
+  if (order.fulfillment === "group") {
+    const deal = groupDealFor(state, order);
+    if (!deal || !dealIsOrderable(deal) || !before(state.now, deal.closesAt)) return false;
+    if (!deal.participantIds.includes(order.residentId)) return false;
+  }
+  return true;
+}
+
+function acceptablePlan(state: DemoState, plan: RecurringPlan): boolean {
+  const service = state.serviceOfferings.find((item) => item.id === plan.serviceId);
+  if (!service || !service.active || !service.fulfillment.includes("recurring")) return false;
+  if (!hasId(state.residents, plan.residentId) || !service.providerIds.includes(plan.providerId)) return false;
+  if (!isoTime(plan.nextDate) || !before(state.now, plan.nextDate)) return false;
+  const existing = state.recurringPlans.find((item) => item.id === plan.id);
+  return !existing || existing.residentId === plan.residentId;
+}
+
+const canTransition = (from: OrderStatus, to: OrderStatus) => ORDER_TRANSITIONS[from]?.includes(to) === true;
+
+function amenityFor(state: DemoState, amenityId: string, buildingId: string): Amenity | undefined {
+  return state.amenities.find((item) => item.id === amenityId && item.buildingId === buildingId);
+}
+
+function mutates(state: DemoState, action: DemoAction): boolean {
+  return state.scenario === "offline" && !READ_ONLY_ACTION_TYPES.has(action.type);
+}
+
 export function reduceDemoState(state: DemoState, action: DemoAction): DemoState {
+  /** Offline is a browsing-only scenario: cached reads stay, writes are refused. */
+  if (mutates(state, action)) return state;
   switch (action.type) {
     case "locale/set": return { ...state, locale: action.locale };
     case "scenario/set": {
@@ -118,48 +213,128 @@ export function reduceDemoState(state: DemoState, action: DemoAction): DemoState
         )],
       };
     }
-    case "order/created": {
-      const service = state.serviceOfferings.find((item) => item.id === action.order.serviceId);
-      const providerIsValid = !action.order.providerId || service?.providerIds.includes(action.order.providerId);
-      return service && providerIsValid && residentAt(state, action.order.residentId, action.order.buildingId, action.order.unitId) && !hasId(state.orders, action.order.id) ? { ...state, orders: [...state.orders, action.order] } : state;
+    case "order/created": return acceptableNewOrder(state, action.order) ? { ...state, orders: [...state.orders, action.order] } : state;
+    case "order/status-changed": {
+      const order = state.orders.find((item) => item.id === action.orderId);
+      if (!order || !ORDER_STATUSES.includes(action.status) || !isoTime(action.occurredAt)) return state;
+      if (!canTransition(order.status, action.status)) return state;
+      return { ...state, orders: updateById(state.orders, action.orderId, (item) => addTimeline(item, action.status, action.occurredAt)) };
     }
-    case "order/status-changed": return hasId(state.orders, action.orderId) ? { ...state, orders: updateById(state.orders, action.orderId, (order) => addTimeline(order, action.status, action.occurredAt)) } : state;
     case "order/provider-assigned": {
       const order = state.orders.find((item) => item.id === action.orderId);
       const provider = state.providers.find((item) => item.id === action.providerId);
-      return order && provider?.serviceIds.includes(order.serviceId) ? { ...state, orders: updateById(state.orders, action.orderId, (item) => ({ ...addTimeline(item, "assigned", action.occurredAt), providerId: action.providerId })) } : state;
+      if (!order || !provider?.serviceIds.includes(order.serviceId) || !isoTime(action.occurredAt)) return state;
+      if (!canTransition(order.status, "assigned")) return state;
+      return { ...state, orders: updateById(state.orders, action.orderId, (item) => ({ ...addTimeline(item, "assigned", action.occurredAt), providerId: action.providerId })) };
     }
-    case "order/rated": return hasId(state.orders, action.orderId) && action.rating >= 1 && action.rating <= 5 ? { ...state, orders: updateById(state.orders, action.orderId, (order) => ({ ...order, rating: action.rating })) } : state;
+    case "order/rated": {
+      const order = state.orders.find((item) => item.id === action.orderId);
+      if (!order || order.status !== "completed") return state;
+      if (!Number.isInteger(action.rating) || action.rating < 1 || action.rating > 5) return state;
+      return { ...state, orders: updateById(state.orders, action.orderId, (item) => ({ ...item, rating: action.rating })) };
+    }
     case "service/availability-changed": return hasId(state.serviceOfferings, action.serviceId) ? { ...state, serviceOfferings: updateById(state.serviceOfferings, action.serviceId, (service) => ({ ...service, active: action.active })) } : state;
-    case "service/updated": return hasId(state.serviceOfferings, action.serviceId) ? { ...state, serviceOfferings: updateById(state.serviceOfferings, action.serviceId, (service) => ({ ...service, ...action.patch })) } : state;
-    case "quote/approved": return hasId(state.orders, action.orderId) ? { ...state, orders: updateById(state.orders, action.orderId, (order) => ({ ...addTimeline(order, "scheduled", action.occurredAt), quoteAmount: action.amount, amount: action.amount })) } : state;
-    case "quote/rejected": return hasId(state.orders, action.orderId) ? { ...state, orders: updateById(state.orders, action.orderId, (order) => ({ ...addTimeline(order, "cancelled", action.occurredAt), paymentStatus: "cancelled" })) } : state;
-    case "member-offer/upserted": return hasId(state.serviceOfferings, action.offer.serviceId) ? { ...state, memberOffers: upsert(state.memberOffers, action.offer) } : state;
+    case "service/updated": {
+      if (!hasId(state.serviceOfferings, action.serviceId)) return state;
+      if (Object.values(action.patch).some((value) => value !== undefined && !positive(value))) return state;
+      return { ...state, serviceOfferings: updateById(state.serviceOfferings, action.serviceId, (service) => ({ ...service, ...action.patch })) };
+    }
+    case "quote/provided": {
+      const order = state.orders.find((item) => item.id === action.orderId);
+      if (!order || order.status !== "awaiting-quote" || !positive(action.amount) || !isoTime(action.occurredAt)) return state;
+      return { ...state, orders: updateById(state.orders, action.orderId, (item) => ({ ...addTimeline(item, "quote-ready", action.occurredAt), quoteAmount: action.amount })) };
+    }
+    case "quote/approved": {
+      const order = state.orders.find((item) => item.id === action.orderId);
+      if (!order || order.status !== "quote-ready" || !positive(action.amount) || !isoTime(action.occurredAt)) return state;
+      if (order.quoteAmount !== undefined && order.quoteAmount !== action.amount) return state;
+      return { ...state, orders: updateById(state.orders, action.orderId, (item) => ({ ...addTimeline(item, "scheduled", action.occurredAt), quoteAmount: action.amount, amount: action.amount })) };
+    }
+    case "quote/rejected": {
+      const order = state.orders.find((item) => item.id === action.orderId);
+      if (!order || !canTransition(order.status, "cancelled") || !isoTime(action.occurredAt)) return state;
+      if (order.status !== "awaiting-quote" && order.status !== "quote-ready") return state;
+      return { ...state, orders: updateById(state.orders, action.orderId, (item) => ({ ...addTimeline(item, "cancelled", action.occurredAt), paymentStatus: "cancelled" })) };
+    }
+    case "member-offer/upserted": {
+      const offer = action.offer;
+      if (!hasId(state.serviceOfferings, offer.serviceId) || !hasId(state.providers, offer.providerId)) return state;
+      if (!positive(offer.regularPrice) || !positive(offer.memberPrice) || offer.memberPrice >= offer.regularPrice) return state;
+      if (!isoTime(offer.validUntil)) return state;
+      return { ...state, memberOffers: upsert(state.memberOffers, offer) };
+    }
     case "member-offer/disabled": return hasId(state.memberOffers, action.offerId) ? { ...state, memberOffers: updateById(state.memberOffers, action.offerId, (offer) => ({ ...offer, active: false })) } : state;
-    case "recurring-plan/upserted": return hasId(state.serviceOfferings, action.plan.serviceId) && hasId(state.residents, action.plan.residentId) ? { ...state, recurringPlans: upsert(state.recurringPlans, action.plan) } : state;
-    case "recurring-plan/toggled": return hasId(state.recurringPlans, action.planId) ? { ...state, recurringPlans: updateById(state.recurringPlans, action.planId, (plan) => ({ ...plan, active: action.active })) } : state;
-    case "recurring-plan/next-skipped": return hasId(state.recurringPlans, action.planId) ? { ...state, recurringPlans: updateById(state.recurringPlans, action.planId, (plan) => ({ ...plan, skippedDates: plan.skippedDates.includes(action.date) ? plan.skippedDates : [...plan.skippedDates, action.date] })) } : state;
+    case "membership/upgraded": {
+      const resident = state.residents.find((item) => item.id === action.residentId);
+      if (!resident || resident.subscriber) return state;
+      return { ...state, residents: updateById(state.residents, action.residentId, (item) => ({ ...item, subscriber: true })) };
+    }
+    case "recurring-plan/upserted": {
+      if (!acceptablePlan(state, action.plan)) return state;
+      return { ...state, recurringPlans: upsert(state.recurringPlans, action.plan) };
+    }
+    case "recurring/started": {
+      const { plan, order } = action;
+      if (!acceptablePlan(state, plan) || hasId(state.recurringPlans, plan.id)) return state;
+      if (order.planId !== plan.id || order.serviceId !== plan.serviceId || order.residentId !== plan.residentId) return state;
+      if (order.fulfillment !== "recurring" || order.scheduledAt !== plan.nextDate) return state;
+      if (!acceptableNewOrder(state, order)) return state;
+      return { ...state, recurringPlans: [...state.recurringPlans, plan], orders: [...state.orders, order] };
+    }
+    case "recurring-plan/toggled": return hasId(state.recurringPlans, action.planId) ? { ...state, recurringPlans: updateById(state.recurringPlans, action.planId, (plan) => plan.active === action.active ? plan : { ...plan, active: action.active }) } : state;
+    case "recurring-plan/next-skipped": {
+      const plan = state.recurringPlans.find((item) => item.id === action.planId);
+      if (!plan || !isoTime(action.date) || plan.skippedDates.includes(action.date)) return state;
+      return { ...state, recurringPlans: updateById(state.recurringPlans, action.planId, (item) => ({ ...item, skippedDates: [...item.skippedDates, action.date] })) };
+    }
     case "neighbor-deal/joined": {
       const deal = state.neighborDeals.find((item) => item.id === action.dealId);
-      return deal && residentAt(state, action.residentId, deal.buildingId) ? { ...state, neighborDeals: updateById(state.neighborDeals, action.dealId, (item) => ({ ...item, participantIds: item.participantIds.includes(action.residentId) ? item.participantIds : [...item.participantIds, action.residentId] })) } : state;
+      if (!deal || !residentAt(state, action.residentId, deal.buildingId)) return state;
+      if (!before(state.now, deal.closesAt) || deal.participantIds.includes(action.residentId)) return state;
+      return { ...state, neighborDeals: updateById(state.neighborDeals, action.dealId, (item) => ({ ...item, participantIds: [...item.participantIds, action.residentId] })) };
     }
-    case "neighbor-gift/sent": return hasId(state.serviceOfferings, action.gift.serviceId) && hasId(state.residents, action.gift.senderId) && hasId(state.neighborRelationships, action.gift.recipientRelationshipId) && !hasId(state.gifts, action.gift.id) ? { ...state, gifts: [...state.gifts, action.gift] } : state;
+    case "neighbor-gift/sent": {
+      const gift = action.gift;
+      const service = state.serviceOfferings.find((item) => item.id === gift.serviceId);
+      if (!service?.active || !hasId(state.residents, gift.senderId) || hasId(state.gifts, gift.id)) return state;
+      if (!hasId(state.neighborRelationships, gift.recipientRelationshipId) || gift.status !== "sent") return state;
+      return { ...state, gifts: [...state.gifts, gift] };
+    }
     case "building/updated": return hasId(state.buildings, action.buildingId) ? { ...state, buildings: updateById(state.buildings, action.buildingId, (building) => ({ ...building, ...action.patch })) } : state;
     case "unit/updated": return hasId(state.units, action.unitId) ? { ...state, units: updateById(state.units, action.unitId, (unit) => ({ ...unit, ...action.patch })) } : state;
     case "resident/updated": return hasId(state.residents, action.residentId) ? { ...state, residents: updateById(state.residents, action.residentId, (resident) => ({ ...resident, ...action.patch })) } : state;
     case "announcement/published": return hasId(state.buildings, action.announcement.buildingId) && !hasId(state.announcements, action.announcement.id) ? { ...state, announcements: [...state.announcements, action.announcement] } : state;
     case "poll/created": return hasId(state.buildings, action.poll.buildingId) && action.poll.options.every((option) => option.voterIds.every((residentId) => residentAt(state, residentId, action.poll.buildingId))) && !hasId(state.polls, action.poll.id) ? { ...state, polls: [...state.polls, action.poll] } : state;
-    case "visitor-pass/created": return residentAt(state, action.pass.residentId, action.pass.buildingId, action.pass.unitId) && !hasId(state.visitorPasses, action.pass.id) ? { ...state, visitorPasses: [...state.visitorPasses, action.pass] } : state;
-    case "amenity-booking/created": return residentAt(state, action.booking.residentId, action.booking.buildingId) && !hasId(state.amenityBookings, action.booking.id) ? { ...state, amenityBookings: [...state.amenityBookings, action.booking] } : state;
+    case "visitor-pass/created": {
+      const pass = action.pass;
+      if (!residentAt(state, pass.residentId, pass.buildingId, pass.unitId) || hasId(state.visitorPasses, pass.id)) return state;
+      if (pass.status !== "active" || !filled(pass.guestName) || !isoTime(pass.expiresAt) || !before(state.now, pass.expiresAt)) return state;
+      return { ...state, visitorPasses: [...state.visitorPasses, pass] };
+    }
+    case "amenity-booking/created": {
+      const booking = action.booking;
+      if (!residentAt(state, booking.residentId, booking.buildingId) || hasId(state.amenityBookings, booking.id)) return state;
+      if (booking.status !== "upcoming" || !isoTime(booking.startsAt) || !before(state.now, booking.startsAt)) return state;
+      const amenity = amenityFor(state, booking.amenityId, booking.buildingId);
+      if (!amenity || !amenity.slots.includes(booking.startsAt)) return state;
+      const taken = state.amenityBookings.filter((item) => item.amenityId === booking.amenityId && item.startsAt === booking.startsAt && item.status !== "cancelled");
+      if (taken.length >= amenity.capacity || taken.some((item) => item.residentId === booking.residentId)) return state;
+      return { ...state, amenityBookings: [...state.amenityBookings, booking] };
+    }
     case "poll/voted": {
       const poll = state.polls.find((item) => item.id === action.pollId);
       if (!poll || !poll.options.some((option) => option.id === action.optionId) || !residentAt(state, action.residentId, poll.buildingId)) return state;
-      return { ...state, polls: updateById(state.polls, action.pollId, (item) => ({ ...item, options: item.options.map((option) => ({ ...option, voterIds: option.id === action.optionId ? option.voterIds.includes(action.residentId) ? option.voterIds : [...option.voterIds, action.residentId] : option.voterIds.filter((id) => id !== action.residentId) })) })) };
+      if (!before(state.now, poll.closesAt)) return state;
+      if (poll.options.some((option) => option.id === action.optionId && option.voterIds.includes(action.residentId))) return state;
+      return { ...state, polls: updateById(state.polls, action.pollId, (item) => ({ ...item, options: item.options.map((option) => ({ ...option, voterIds: option.id === action.optionId ? [...option.voterIds, action.residentId] : option.voterIds.filter((id) => id !== action.residentId) })) })) };
     }
     case "event/rsvp": {
       const event = state.events.find((item) => item.id === action.eventId);
-      if (!event || !residentAt(state, action.residentId, event.buildingId)) return state;
-      return { ...state, events: updateById(state.events, action.eventId, (item) => ({ ...item, attendeeIds: action.attending ? item.attendeeIds.includes(action.residentId) ? item.attendeeIds : [...item.attendeeIds, action.residentId] : item.attendeeIds.filter((id) => id !== action.residentId) })) };
+      if (!event || !residentAt(state, action.residentId, event.buildingId) || !before(state.now, event.startsAt)) return state;
+      const attending = event.attendeeIds.includes(action.residentId);
+      if (action.attending === attending) return state;
+      if (action.attending && event.attendeeIds.length >= event.capacity) return state;
+      return { ...state, events: updateById(state.events, action.eventId, (item) => ({ ...item, attendeeIds: action.attending ? [...item.attendeeIds, action.residentId] : item.attendeeIds.filter((id) => id !== action.residentId) })) };
     }
     case "demo/reset": return createSeedState();
   }

@@ -25,7 +25,7 @@ describe("Jeerah demo domain", () => {
     expect(state.neighborRelationships).toHaveLength(3);
     expect(state.gifts).toHaveLength(2);
     expect(state.announcements).toHaveLength(6);
-    expect(state.polls).toHaveLength(2);
+    expect(state.polls).toHaveLength(3);
     expect(state.events).toHaveLength(2);
     expect(state.visitorPasses).toHaveLength(5);
     expect(state.amenityBookings).toHaveLength(6);
@@ -196,8 +196,8 @@ describe("Jeerah demo domain", () => {
     expect(quoteReady.amount).toBeUndefined();
     expect(quoteReady.paymentStatus).not.toBe("paid");
     expect(Object.fromEntries([...new Set(state.orders.map((order) => order.status))].map((status) => [status, state.orders.filter((order) => order.status === status).length]))).toEqual({
-      completed: 3, cancelled: 1, scheduled: 2, confirmed: 2, assigned: 2, "en-route": 2, "in-progress": 2,
-      "awaiting-resident-approval": 1, "awaiting-quote": 1, "quote-ready": 1, refunded: 1,
+      completed: 3, cancelled: 1, scheduled: 2, confirmed: 2, assigned: 2, "en-route": 1, "in-progress": 2,
+      "awaiting-resident-approval": 1, "awaiting-quote": 1, "quote-ready": 2, refunded: 1,
     });
     for (const pass of state.visitorPasses) expect(pass.guestName).not.toMatch(/^Guest \d+$/);
   });
@@ -247,7 +247,7 @@ describe("Jeerah demo domain", () => {
     expect(scopeResults.every((service) => service.scope === "building" || service.scope === "both")).toBe(true);
     expect(ids(scopeResults)).toEqual(ids(state.serviceOfferings.filter((service) => service.scope === "building" || service.scope === "both")));
 
-    const providerId = "provider-1";
+    const providerId = "provider-lamsa-clean";
     const providerResults = searchServiceCatalog(state, "", { providerId });
     expect(providerResults.every((service) => service.providerIds.includes(providerId))).toBe(true);
     expect(ids(providerResults)).toEqual(ids(state.serviceOfferings.filter((service) => service.providerIds.includes(providerId))));
@@ -256,7 +256,7 @@ describe("Jeerah demo domain", () => {
     expect(ids(searchServiceCatalog(disabled, "", { active: false }))).toEqual(["service-pest-control"]);
     expect(ids(searchServiceCatalog(disabled, "", { active: true }))).not.toContain("service-pest-control");
 
-    expect(ids(searchServiceCatalog(state, "", { familyId: "care-cleaning", fulfillment: "recurring", scope: "apartment", providerId: "provider-16", active: true }))).toEqual(["service-home-cleaning"]);
+    expect(ids(searchServiceCatalog(state, "", { familyId: "care-cleaning", fulfillment: "recurring", scope: "apartment", providerId: "provider-lamsa-clean", active: true }))).toEqual(["service-bedding-laundry", "service-home-cleaning"]);
   });
 
   it("formats values deterministically", () => {
@@ -332,30 +332,30 @@ describe("Jeerah demo domain", () => {
     { name: "creates invoices", action: { type: "invoice/created", invoice: { ...state.invoices[0], id: "invoice-created" } }, verify: (next: typeof state) => expect(next.invoices).toHaveLength(11) },
     { name: "records payments", action: { type: "payment/recorded", payment: { ...state.payments[0], id: "payment-created", status: "paid" } }, verify: (next: typeof state) => expect(next.invoices.find((invoice) => invoice.id === "invoice-elevator")?.status).toBe("paid") },
     { name: "changes payment statuses", action: { type: "payment/status-changed", paymentId: "payment-1", status: "paid", occurredAt: DATE }, verify: (next: typeof state) => expect(next.payments.find((payment) => payment.id === "payment-1")?.status).toBe("paid") },
-    { name: "creates orders", action: { type: "order/created", order: { ...state.orders[0], id: "order-created" } }, verify: (next: typeof state) => expect(next.orders).toHaveLength(19) },
-    { name: "changes order statuses", action: { type: "order/status-changed", orderId: "order-1", status: "completed", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-1")?.timeline).toHaveLength(2) },
-    { name: "assigns order providers", action: { type: "order/provider-assigned", orderId: "order-1", providerId: "provider-1", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-1")?.status).toBe("assigned") },
+    { name: "creates orders", action: { type: "order/created", order: { ...state.orders[3], id: "order-created", status: "confirmed", timeline: [{ id: "order-created-confirmed", status: "confirmed", occurredAt: DATE, note: { ar: "تأكيد", en: "Confirmed" } }] } }, verify: (next: typeof state) => expect(next.orders).toHaveLength(19) },
+    { name: "changes order statuses", action: { type: "order/status-changed", orderId: "order-4", status: "in-progress", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-4")?.timeline).toHaveLength(4) },
+    { name: "assigns order providers", action: { type: "order/provider-assigned", orderId: "order-3", providerId: "provider-dar-market", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-3")?.status).toBe("assigned") },
     { name: "rates orders", action: { type: "order/rated", orderId: "order-1", rating: 5, occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-1")?.rating).toBe(5) },
     { name: "changes service availability", action: { type: "service/availability-changed", serviceId: state.serviceOfferings[0].id, active: false }, verify: (next: typeof state) => expect(next.serviceOfferings[0].active).toBe(false) },
     { name: "updates service metadata", action: { type: "service/updated", serviceId: state.serviceOfferings[0].id, patch: { etaMinutes: 99 } }, verify: (next: typeof state) => expect(next.serviceOfferings[0].etaMinutes).toBe(99) },
-    { name: "approves quotes", action: { type: "quote/approved", orderId: "order-9", amount: 450, occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-9")?.amount).toBe(450) },
+    { name: "approves quotes", action: { type: "quote/approved", orderId: "order-10", amount: 620, occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-10")?.amount).toBe(620) },
     { name: "rejects quotes", action: { type: "quote/rejected", orderId: "order-10", occurredAt: DATE }, verify: (next: typeof state) => expect(next.orders.find((order) => order.id === "order-10")?.paymentStatus).toBe("cancelled") },
     { name: "upserts member offers", action: { type: "member-offer/upserted", offer: { ...state.memberOffers[0], id: "offer-created" } }, verify: (next: typeof state) => expect(next.memberOffers).toHaveLength(9) },
     { name: "disables member offers", action: { type: "member-offer/disabled", offerId: "member-offer-1" }, verify: (next: typeof state) => expect(next.memberOffers[0].active).toBe(false) },
     { name: "upserts recurring plans", action: { type: "recurring-plan/upserted", plan: { ...state.recurringPlans[0], id: "plan-created" } }, verify: (next: typeof state) => expect(next.recurringPlans).toHaveLength(6) },
     { name: "toggles recurring plans", action: { type: "recurring-plan/toggled", planId: "plan-1", active: false }, verify: (next: typeof state) => expect(next.recurringPlans[0].active).toBe(false) },
     { name: "skips recurring dates", action: { type: "recurring-plan/next-skipped", planId: "plan-1", date: DATE }, verify: (next: typeof state) => expect(next.recurringPlans[0].skippedDates).toContain(DATE) },
-    { name: "joins neighbor deals", action: { type: "neighbor-deal/joined", dealId: "deal-1", residentId: "resident-lina" }, verify: (next: typeof state) => expect(next.neighborDeals[0].participantIds).toContain("resident-lina") },
+    { name: "joins neighbor deals", action: { type: "neighbor-deal/joined", dealId: "deal-hvac", residentId: "resident-saif" }, verify: (next: typeof state) => expect(next.neighborDeals[0].participantIds).toContain("resident-saif") },
     { name: "sends neighbor gifts", action: { type: "neighbor-gift/sent", gift: { ...state.gifts[0], id: "gift-created" } }, verify: (next: typeof state) => expect(next.gifts).toHaveLength(3) },
     { name: "updates buildings", action: { type: "building/updated", buildingId: "building-89", patch: { manager: { ar: "مدير", en: "Manager" } } }, verify: (next: typeof state) => expect(next.buildings[0].manager.en).toBe("Manager") },
     { name: "updates units", action: { type: "unit/updated", unitId: "unit-89-1204", patch: { status: "maintenance" } }, verify: (next: typeof state) => expect(next.units[0].status).toBe("maintenance") },
     { name: "updates residents", action: { type: "resident/updated", residentId: "resident-saif", patch: { role: "tenant" } }, verify: (next: typeof state) => expect(next.residents[0].role).toBe("tenant") },
     { name: "publishes announcements", action: { type: "announcement/published", announcement: { ...state.announcements[0], id: "announcement-created" } }, verify: (next: typeof state) => expect(next.announcements).toHaveLength(7) },
-    { name: "creates polls", action: { type: "poll/created", poll: { ...state.polls[0], id: "poll-created" } }, verify: (next: typeof state) => expect(next.polls).toHaveLength(3) },
+    { name: "creates polls", action: { type: "poll/created", poll: { ...state.polls[0], id: "poll-created" } }, verify: (next: typeof state) => expect(next.polls).toHaveLength(4) },
     { name: "creates visitor passes", action: { type: "visitor-pass/created", pass: { ...state.visitorPasses[0], id: "pass-created" } }, verify: (next: typeof state) => expect(next.visitorPasses).toHaveLength(6) },
-    { name: "creates amenity bookings", action: { type: "amenity-booking/created", booking: { ...state.amenityBookings[0], id: "booking-created" } }, verify: (next: typeof state) => expect(next.amenityBookings).toHaveLength(7) },
+    { name: "creates amenity bookings", action: { type: "amenity-booking/created", booking: { ...state.amenityBookings[0], id: "booking-created", startsAt: "2026-08-05T19:00:00+03:00" } }, verify: (next: typeof state) => expect(next.amenityBookings).toHaveLength(7) },
     { name: "moves poll votes", action: { type: "poll/voted", pollId: "poll-1", optionId: "poll-1-evening", residentId: "resident-saif" }, verify: (next: typeof state) => expect(next.polls[0].options[1].voterIds).toContain("resident-saif") },
-    { name: "records event RSVPs", action: { type: "event/rsvp", eventId: "event-1", residentId: "resident-saif", attending: false }, verify: (next: typeof state) => expect(next.events[0].attendeeIds).not.toContain("resident-saif") },
+    { name: "records event RSVPs", action: { type: "event/rsvp", eventId: "event-1", residentId: "resident-saif", attending: true }, verify: (next: typeof state) => expect(next.events[0].attendeeIds).toContain("resident-saif") },
     { name: "resets demo state", action: { type: "demo/reset" }, verify: (next: typeof state) => {
       expect(next).not.toBe(state);
       expect(next.schemaVersion).toBe(2);

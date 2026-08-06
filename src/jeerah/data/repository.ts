@@ -94,8 +94,14 @@ function createRepository(options: InternalOptions = {}): DemoRepository {
     notify();
     return committed;
   };
+  /**
+   * A rejected action returns the very state it was handed. That is not a new
+   * revision, so it must not be persisted, broadcast, or counted as a change.
+   */
   const commitMemory = (transition: (current: DemoState) => DemoState) => {
-    state = transition(state);
+    const next = transition(state);
+    if (next === state) return snapshot();
+    state = next;
     revision += 1;
     lastSyncAt = now().toISOString();
     return finishCommit();
@@ -129,7 +135,13 @@ function createRepository(options: InternalOptions = {}): DemoRepository {
       storageMode = "memory";
       return commitMemory(transition);
     }
-    const nextState = transition(clone(existing ? existing.value : state));
+    const source = clone(existing ? existing.value : state);
+    const nextState = transition(source);
+    if (nextState === source) {
+      state = source;
+      revision = existing?.revision ?? revision;
+      return snapshot();
+    }
     const nextRevision = (existing?.revision ?? revision) + 1;
     const updatedAt = now().toISOString();
     try {
