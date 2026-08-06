@@ -2942,3 +2942,6 @@ body[data-jeerah-theme="dark"] .jeerah-admin-surface .admin-kpi__icon[data-tone=
 
 .jeerah-launcher__badges { display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 6px; opacity: 0.85; }
 .jeerah-launcher__badges svg, .jeerah-launcher__badges img { block-size: 22px; inline-size: auto; }
+
+.jeerah-payment-brands { list-style: none; margin: 0 0 6px; padding: 0; display: flex; justify-content: center; align-items: center; gap: 18px; opacity: 0.85; }
+.jeerah-payment-brands svg, .jeerah-payment-brands img { block-size: 22px; inline-size: auto; }

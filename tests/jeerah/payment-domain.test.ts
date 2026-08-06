@@ -66,6 +66,16 @@ describe("atomic payment/recorded transition", () => {
     expect(counts(twice)).toEqual(counts(once));
   });
 
+  it("commits a Mastercard payment carrying its official 5105 mask", () => {
+    const mastercardAttempt: Payment = { ...paidAttempt, id: "payment-journey-mastercard", method: "mastercard", last4: "5105" };
+    const next = reduceDemoState(state, { type: "payment/recorded", payment: mastercardAttempt });
+
+    expect(next.payments.filter((payment) => payment.id === mastercardAttempt.id)).toHaveLength(1);
+    expect(next.payments.find((payment) => payment.id === mastercardAttempt.id)?.last4).toBe("5105");
+    expect(next.invoices.find((invoice) => invoice.id === "invoice-elevator")?.status).toBe("paid");
+    expect(next.auditLog.filter((entry) => entry.id === `audit-${mastercardAttempt.id}`)).toHaveLength(1);
+  });
+
   it.each([
     ["an unknown invoice", { ...paidAttempt, invoiceId: "invoice-missing" }],
     ["another resident's invoice", { ...paidAttempt, residentId: "resident-lina" }],
@@ -76,6 +86,7 @@ describe("atomic payment/recorded transition", () => {
     ["a mada mask that is not 4455", { ...paidAttempt, last4: "4242" as const }],
     ["an Apple Pay mask", { ...paidAttempt, method: "apple-pay" as const }],
     ["a Visa mask that is not 4242", { ...paidAttempt, method: "visa" as const, last4: "4455" as const }],
+    ["a Mastercard mask that is not 5105", { ...paidAttempt, method: "mastercard" as const, last4: "4242" as const }],
     ["an unsupported method", { ...paidAttempt, method: "cash" as never }],
     ["an unsupported status", { ...paidAttempt, status: "settled" as never }],
     ["a blank reference", { ...paidAttempt, reference: "  " }],
