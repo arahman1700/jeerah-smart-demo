@@ -1,5 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MobileRuntime } from "../../src/mobile/MobileRuntime";
 import JeerahPrototype from "../../src/jeerah/JeerahPrototype";
@@ -50,6 +49,15 @@ function makeRepository(locale: "ar" | "en", channelName = `shell-${Math.random(
   return repository;
 }
 
+/**
+ * The resident hero owns the locale toggle, and the protected FlowStack binds a
+ * use-gesture drag whose tap filter cancels synthetic pointer clicks under
+ * jsdom. Real pointer input is unaffected, so the toggle is activated directly.
+ */
+function tapLocaleToggle(element: HTMLElement) {
+  fireEvent.click(element);
+}
+
 function FutureStateProbe() {
   const state = useDemoState();
   return <output data-testid="future-state-probe">{state.locale}</output>;
@@ -74,23 +82,21 @@ describe("Jeerah shell", () => {
 
   it("sets Arabic direction on the direct surface", async () => {
     window.history.replaceState({}, "", "/?surface=app");
-    const user = userEvent.setup();
     render(<MobileRuntime><JeerahPrototype repository={makeRepository("en")} /></MobileRuntime>);
 
-    await user.click(await screen.findByRole("button", { name: /العربية/i }));
+    tapLocaleToggle(await screen.findByRole("button", { name: /العربية/i }));
 
     expect(screen.getByRole("application", { name: /jeerah smart demo/i })).toHaveAttribute("dir", "rtl");
   });
 
   it("persists a locale choice and receives the same locale in a synchronized repository", async () => {
     window.history.replaceState({}, "", "/?surface=app");
-    const user = userEvent.setup();
     const channelName = "shell-locale-sync";
     const repository = makeRepository("en", channelName);
     const peer = makeRepository("en", channelName);
     const view = render(<MobileRuntime><JeerahPrototype repository={repository} /></MobileRuntime>);
 
-    await user.click(await screen.findByRole("button", { name: /العربية/i }));
+    tapLocaleToggle(await screen.findByRole("button", { name: /العربية/i }));
 
     await waitFor(async () => expect((await repository.load()).state.locale).toBe("ar"));
     await waitFor(async () => expect((await peer.load()).state.locale).toBe("ar"));
@@ -102,13 +108,12 @@ describe("Jeerah shell", () => {
 
   it("uses the safe locale when persisted state is malformed, then persists a valid choice", async () => {
     window.history.replaceState({}, "", "/?surface=app");
-    const user = userEvent.setup();
     const repository = createMemoryDemoRepository({ ...createSeedState(), locale: "malformed" } as unknown as DemoState, "shell-malformed-locale");
     repositories.add(repository);
     render(<MobileRuntime><JeerahPrototype repository={repository} /></MobileRuntime>);
 
     expect(await screen.findByRole("application", { name: "Jeerah Smart demo" })).toHaveAttribute("lang", "en");
-    await user.click(screen.getByRole("button", { name: /العربية/i }));
+    tapLocaleToggle(screen.getByRole("button", { name: /العربية/i }));
     await waitFor(async () => expect((await repository.load()).state.locale).toBe("ar"));
   });
 
