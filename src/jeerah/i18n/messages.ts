@@ -350,6 +350,76 @@ const task8Ar: Record<keyof typeof task8En, string> = {
   "profile.membership": "العضوية", "profile.member": "عضو جيرة بلس التجريبي", "profile.guest": "ساكن تجريبي عادي", "profile.home": "المنزل", "profile.language": "اللغة",
 };
 
+const task9En = {
+  "admin.navigation": "Admin navigation",
+  "admin.open_navigation": "Open navigation",
+  "admin.close_navigation": "Close navigation",
+  "admin.reset_filters": "Reset filters",
+  "admin.empty_results": "No results match these filters.",
+  "admin.saved": "Saved",
+  "admin.edit_property": "Edit property",
+  "admin.edit_unit": "Edit unit",
+  "admin.edit_resident": "Edit resident",
+  "admin.validation_required": "This field is required.",
+  "admin.name_en": "English name",
+  "admin.name_ar": "Arabic name",
+  "admin.address_en": "English address",
+  "admin.address_ar": "Arabic address",
+  "admin.manager_en": "English manager name",
+  "admin.manager_ar": "Arabic manager name",
+  "admin.search_units": "Search units",
+  "admin.status_filter": "Status filter",
+  "admin.all_statuses": "All statuses",
+  "admin.kpi_properties": "Properties",
+  "admin.kpi_units": "Occupied units",
+  "admin.kpi_units_detail": "{vacant} vacant · {maintenance} maintenance",
+  "admin.kpi_pulse": "Average pulse",
+  "admin.collections_chart": "Collections by month",
+  "admin.orders_chart": "Orders by status",
+  "admin.recent_activity": "Recent activity",
+  "admin.urgent_orders": "Urgent maintenance",
+  "table.floor": "Floor",
+  "table.role": "Role",
+  "label.subscriber": "Subscriber",
+  "label.yes": "Yes",
+  "label.no": "No",
+} as const;
+
+const task9Ar: Record<keyof typeof task9En, string> = {
+  "admin.navigation": "تنقل الإدارة",
+  "admin.open_navigation": "فتح التنقل",
+  "admin.close_navigation": "إغلاق التنقل",
+  "admin.reset_filters": "إعادة تعيين التصفية",
+  "admin.empty_results": "لا توجد نتائج مطابقة لهذه التصفية.",
+  "admin.saved": "تم الحفظ",
+  "admin.edit_property": "تعديل العقار",
+  "admin.edit_unit": "تعديل الوحدة",
+  "admin.edit_resident": "تعديل الساكن",
+  "admin.validation_required": "هذا الحقل مطلوب.",
+  "admin.name_en": "الاسم بالإنجليزية",
+  "admin.name_ar": "الاسم بالعربية",
+  "admin.address_en": "العنوان بالإنجليزية",
+  "admin.address_ar": "العنوان بالعربية",
+  "admin.manager_en": "اسم المدير بالإنجليزية",
+  "admin.manager_ar": "اسم المدير بالعربية",
+  "admin.search_units": "البحث في الوحدات",
+  "admin.status_filter": "تصفية الحالة",
+  "admin.all_statuses": "كل الحالات",
+  "admin.kpi_properties": "العقارات",
+  "admin.kpi_units": "الوحدات المشغولة",
+  "admin.kpi_units_detail": "{vacant} شاغرة · {maintenance} تحت الصيانة",
+  "admin.kpi_pulse": "متوسط النبض",
+  "admin.collections_chart": "التحصيل حسب الشهر",
+  "admin.orders_chart": "الطلبات حسب الحالة",
+  "admin.recent_activity": "النشاط الأخير",
+  "admin.urgent_orders": "صيانة عاجلة",
+  "table.floor": "الطابق",
+  "table.role": "الدور",
+  "label.subscriber": "مشترك",
+  "label.yes": "نعم",
+  "label.no": "لا",
+};
+
 const en = {
   "app.name": "Jeerah Smart",
   "app.demo": "Jeerah Smart demo",
@@ -592,6 +662,7 @@ const en = {
   "family.community_membership": "Community and membership",
   ...task6to12En,
   ...task8En,
+  ...task9En,
 } as const;
 
 const ar: Record<keyof typeof en, string> = {
@@ -836,6 +907,7 @@ const ar: Record<keyof typeof en, string> = {
   "family.community_membership": "المجتمع والعضوية",
   ...task6to12Ar,
   ...task8Ar,
+  ...task9Ar,
 };
 
 export const messages = { en, ar } as const;
@@ -895,4 +967,5 @@ export const requiredPlanMessageKeys = [
   "community_pulse.healthy", "community_pulse.attention", "community_pulse.critical", "property.active", "property.archived", "unit.occupied", "unit.vacant", "unit.maintenance", "resident.owner", "resident.tenant", "resident.family", "resident.active", "resident.invited", "resident.inactive", "provider.verified_demo", "provider.new", "provider.paused", "provider.review", "quote.awaiting", "quote.ready", "quote.approved", "quote.rejected", "announcement.normal", "announcement.important", "announcement.urgent", "poll.open", "poll.closed", "event.upcoming", "event.ongoing", "event.completed", "event.cancelled", "invitation.pending", "invitation.accepted", "invitation.declined", "invitation.expired", "visitor.active", "visitor.expired", "visitor.revoked", "amenity.upcoming", "amenity.completed", "amenity.cancelled", "gift.sent", "gift.redeemed", "service.scope.apartment", "service.scope.building", "service.scope.both", "service.fulfillment.on_demand", "service.fulfillment.scheduled", "service.fulfillment.recurring", "service.fulfillment.quote", "service.fulfillment.group", "service.pricing.fixed", "service.pricing.starting_at", "service.pricing.per_unit", "service.pricing.quote_required", "family.care_cleaning", "family.home_maintenance", "family.building_tech_safety", "family.water_utilities", "family.automotive_mobility", "family.daily_needs", "family.home_fitout_moving", "family.community_membership", "relationship.neighbor", "relationship.friend", "relationship.family", "scenario.title", "scenario.normal", "scenario.empty", "scenario.offline", "scenario.overdue", "scenario.declined", "scenario.urgent_maintenance", "scenario.reset_instruction", "audit.title", "audit.actor", "audit.action", "audit.entity", "audit.description", "analytics.title", "analytics.collected", "analytics.outstanding", "analytics.open_orders", "admin.dashboard", "admin.scenario_studio", "admin.reset_confirmation",
   ...requiredPlanCategoryMessageKeys,
   ...(Object.keys(task8En) as Array<keyof typeof task8En>),
+  ...(Object.keys(task9En) as Array<keyof typeof task9En>),
 ] as const satisfies readonly MessageKey[];

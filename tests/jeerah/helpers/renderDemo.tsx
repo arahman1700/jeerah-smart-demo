@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, render, screen, type RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode, type ReactElement, type ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach } from "vitest";
+import { AdminRoutes } from "../../../src/jeerah/admin/AdminApp";
 import { DemoProvider } from "../../../src/jeerah/data/DemoProvider";
 import { createMemoryDemoRepository, type DemoRepository } from "../../../src/jeerah/data/repository";
 import { createSeedState } from "../../../src/jeerah/domain/fixtures";
@@ -90,6 +92,65 @@ export function renderResident(options: ResidentRenderOptions = {}) {
 
 export function renderResidentAt(screenId: ResidentScreenId, options: Omit<ResidentRenderOptions, "screenId"> = {}) {
   return renderResident({ ...options, screenId });
+}
+
+type AdminRenderOptions = RenderOptions & {
+  locale?: Locale;
+  repository?: DemoRepository;
+  state?: DemoState;
+  viewportWidth?: number;
+  initialPath?: string;
+};
+
+/** Simulates a viewport width with `window` state and a resize event, per the plan. */
+function setViewportWidth(width: number) {
+  Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+  window.dispatchEvent(new Event("resize"));
+}
+
+/**
+ * Renders the admin surface the way production composes it (minus the URL
+ * router shell, replaced by a memory router so tests can deep-link).
+ */
+export function renderAdmin(options: AdminRenderOptions = {}) {
+  const {
+    locale,
+    repository: suppliedRepository,
+    state: suppliedState,
+    viewportWidth = 1280,
+    initialPath = "/",
+    ...renderOptions
+  } = options;
+
+  const state = structuredClone(suppliedState ?? createSeedState());
+  if (locale) state.locale = locale;
+  const channelName = nextChannelName();
+  const repository = suppliedRepository ?? createMemoryDemoRepository(state, channelName);
+  const user = userEvent.setup();
+  setViewportWidth(viewportWidth);
+
+  const result = render(
+    <DemoProvider repository={repository}>
+      <I18nProvider>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <AdminRoutes />
+        </MemoryRouter>
+      </I18nProvider>
+    </DemoProvider>,
+    renderOptions,
+  );
+
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    liveRenders.delete(dispose);
+    result.unmount();
+    if (!suppliedRepository) repository.close();
+  };
+  liveRenders.add(dispose);
+
+  return { ...result, user, state, repository, channelName, cleanup: dispose };
 }
 
 type PaymentRenderOptions = Omit<ResidentRenderOptions, "screenId" | "simulation"> & {

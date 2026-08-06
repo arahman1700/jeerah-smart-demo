@@ -1,8 +1,8 @@
 import { useEffect, useState, type PropsWithChildren } from "react";
 import { getRouteMode, type SurfaceMode } from "./app/routeMode";
 import { SurfacePortal } from "./app/SurfacePortal";
+import { AdminApp } from "./admin/AdminApp";
 import { DemoProvider, type DemoProviderProps } from "./data/DemoProvider";
-import { JeerahLogo } from "./design/JeerahLogo";
 import { I18nProvider, useI18n } from "./i18n/I18nProvider";
 import { ResidentApp } from "./resident/ResidentApp";
 
@@ -33,10 +33,8 @@ function JeerahShell({ mode, children }: PropsWithChildren<{ mode: SurfaceMode }
   return (
     <main className="jeerah-root" dir={dir} lang={locale} data-surface={mode}>
       {children ?? (mode === "admin" ? (
-        <section role="application" aria-label={t("app.demo")} className="jeerah-admin-placeholder">
-          <JeerahLogo locale={locale} background="dark" />
-          <h1>{t("admin.dashboard")}</h1>
-          <p>{t("label.demo_only")}</p>
+        <section role="application" aria-label={t("app.demo")} className="jeerah-admin-surface">
+          <AdminApp />
         </section>
       ) : <ResidentApp />)}
     </main>
