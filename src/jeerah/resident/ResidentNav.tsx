@@ -5,7 +5,7 @@ import type { ResidentScreenId } from "./ResidentApp";
 
 export type ResidentNavId = "home" | "properties" | "orders" | "marketplace" | "profile";
 
-const navIdByScreenId: Partial<Record<ResidentScreenId, ResidentNavId>> = {
+const navIdByScreenId: Record<string, ResidentNavId> = {
   home: "home",
   properties: "properties",
   building: "properties",
@@ -14,11 +14,19 @@ const navIdByScreenId: Partial<Record<ResidentScreenId, ResidentNavId>> = {
   marketplace: "marketplace",
   profile: "profile",
   install: "profile",
+  family: "marketplace",
+  service: "marketplace",
+  provider: "marketplace",
+  compare: "marketplace",
+  offers: "marketplace",
+  plans: "marketplace",
+  gift: "marketplace",
+  order: "orders",
 };
 
 /** Screens without a tab of their own (expenses, community) keep every tab unselected. */
 export function toResidentNavId(screenId: string): ResidentNavId | undefined {
-  return navIdByScreenId[screenId as ResidentScreenId];
+  return navIdByScreenId[screenId];
 }
 
 export function ResidentNav({ active, onNavigate }: {
